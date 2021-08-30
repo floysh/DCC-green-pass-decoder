@@ -48,7 +48,7 @@ reader.addEventListener('load', async (e) => {
 	
 	try {
 		const imgdata = await imageDataUrlToImageData(img, context)
-		let json = dgcDecodeQR(imgdata);
+		let json = await dgcDecodeQR(imgdata);
 		//console.log(json)
 		//console.log(json)
 		const text = JSON.stringify(json, null, 2)
@@ -150,14 +150,32 @@ async function imageDataUrlToImageData(image, context) {
 //
 // Green Pass decoding
 //
-function dgcDecodeQR(greenpassImageData) {
+async function dgcDecodeQR(greenpassImageData) {
 	// Decode QR
-	const greenpassStr = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
+	// BarcodeDetector is currently supported only by Chrome mobile and Samsung browser
+	
+	if (!('BarcodeDetector' in window)) {
+		console.log('Barcode Detector is not supported by this browser.');
+		
+		const greenpass = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
+		
+		if(greenpass === null) throw "no QR code detected"
 
-	//console.log(decodedGreenpass)
-	if(greenpassStr === null) throw "no QR code detected"
+		return dgcDecode(greenpass.data);
+	} 
+	else {
+		console.log('Barcode Detector supported!');
 
-	return dgcDecode(greenpassStr);
+		const barcodeDetector = new BarcodeDetector({formats: ['qr_code']});
+		
+		const barcodes = await barcodeDetector.detect(greenpassImageData);
+
+		
+		if(barcodes.length < 1) throw "no QR code detected"
+		console.log(barcodes[0])
+
+		return dgcDecode(""+barcodes[0].rawValue);
+	}
 }
 
 function dgcDecode(greenpassStr) {
@@ -171,7 +189,7 @@ function dgcDecode(greenpassStr) {
 
 
 	// Remove the "HC1:" heading
-	const greenpassBody = greenpassStr.data.substr(4);
+	const greenpassBody = greenpassStr.substr(4);
 
 	// Decode the base45 representation
 	const decodedData = base45.decode(greenpassBody);
