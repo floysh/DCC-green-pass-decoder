@@ -46,20 +46,6 @@ reader.addEventListener('load', async (e) => {
 	canvas.height = img.height;
 	const context = canvas.getContext('2d')
 	
-	// See https://stackoverflow.com/questions/51869520/image-to-uint8array-in-javascript
-	async function imageDataUrlToImageData(image, context) {
-		return new Promise((resolve, reject) => {
-			context.width = image.width;
-			context.height = image.height;
-			context.drawImage(image, 0, 0);
-			resolve(context.getImageData(0,0,context.width, context.height));
-			
-			/* context.canvas.toBlob(blob => blob.arrayBuffer()
-			.then(buffer => resolve(new Uint8ClampedArray(buffer))).catch(reject)
-			) */
-		});
-		}
-
 	try {
 		const imgdata = await imageDataUrlToImageData(img, context)
 		let json = dgcDecodeQR(imgdata);
@@ -73,27 +59,26 @@ reader.addEventListener('load', async (e) => {
 		const textHR = JSON.stringify(jsonHR, null, 2)
 		document.querySelector("#hr-contents").textContent = textHR
 	}
-	catch(e) {
-		console.warn("NOT A DGC: "+e)
+	catch(err) {
+		console.warn("NOT A DGC: "+err)
 		//console.log(typeof e)
 		//console.log(e)
-		// TODO: show notification
-		const errtext = "This is not a Digital Green Certificate\nError: "+e;
+		// Show error message
+		const errtext = "This is not a Digital Green Certificate\nError: "+err;
 		document.querySelector("#contents").textContent = errtext;
 		document.querySelector("#hr-contents").textContent = errtext;
 	}
 });
 
 
-/* document.querySelector("#qr-reader").addEventListener('change', () => {
+document.querySelector("#file-selector").addEventListener('change', event => {
 	// Load the image as a dataurl to get the correct image size.
-	// This is needed to create an ImageData structure
-	console.log(document.querySelector("#qr-reader").files)
-	reader.readAsDataURL(document.querySelector("#qr-reader").files[0]);
-}); */
+	// The ImageData constructor requires width and height
+	reader.readAsDataURL(event.target.files[0]);
+});
 
 
-
+// TOGGLE
 document.querySelector("#dgcHumanReadable").addEventListener("click", () => {
 	const toggle = document.querySelector("#dgcHumanReadable");
 	if (toggle.checked) {
@@ -108,7 +93,7 @@ document.querySelector("#dgcHumanReadable").addEventListener("click", () => {
 
 
 
-
+// DRAG & DROP
 const dropArea = document.getElementById('drop-area');
 
 dropArea.addEventListener('dragover', (event) => {
@@ -126,36 +111,56 @@ dropArea.addEventListener('drop', (event) => {
   reader.readAsDataURL(fileList[0]);
 });
 
-//dropArea.addEventListener('click', (event) => {
-document.querySelector("#file-selector").addEventListener('click', (event) => {
-	showOpenFilePicker({
-		multiple: false,
-		excludeAcceptAllOption: true,
-		types: [
-			{
-			  description: 'Images',
-			  accept: {
-				'image/*': ['.png', '.gif', '.jpeg', '.jpg']
+
+
+
+
+// FUNCTIONS
+
+
+// Convert a Data URL image into an ImageData structure via the Canvas API
+// See https://stackoverflow.com/questions/51869520/image-to-uint8array-in-javascript
+function imageDataUrlToImageData(image) {
+	const canvas = document.createElement("canvas");
+	const context = canvas.getContext("2d");
+	return imageDataUrlToImageData(image, context);
 			  }
+
+async function imageDataUrlToImageData(image, context) {
+	return new Promise((resolve, reject) => {
+		context.width = image.width;
+		context.height = image.height;
+		context.drawImage(image, 0, 0);
+
+		if (!context.width) {
+			canvas.width = 300;
+			canvas.height = 300;
+			reject("not a valid image file");
 			}
-		  ]
-		}
-	)
-	.catch(e => console.error("Cannot open file: "+e))
-	.then(async fileList => {
-		//console.log(fileList)
-		const file = await fileList[0].getFile()
-		//console.log(file)
-		reader.readAsDataURL(file);
-	})
+
+		resolve(context.getImageData(0,0,context.width, context.height));
+		
+		/* context.canvas.toBlob(blob => blob.arrayBuffer()
+		.then(buffer => resolve(new Uint8ClampedArray(buffer))).catch(reject)
+		) */
 });
+	}
 
 
-
-
-
-
+//
+// Green Pass decoding
+//
 function dgcDecodeQR(greenpassImageData) {
+	// Decode QR
+	const greenpassStr = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
+
+	//console.log(decodedGreenpass)
+	if(greenpassStr === null) throw "no QR code detected"
+
+	return dgcDecode(greenpassStr);
+}
+
+function dgcDecode(greenpassStr) {
 
 	// Digital Covid Certificate structure:
 	// [JSON Schema] ==> CBOR serialization ==> {headers; CBOR; COSE signature} => 
@@ -164,11 +169,6 @@ function dgcDecodeQR(greenpassImageData) {
 	// For more details, see Section 3 of:
 	// https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_v1_en.pdf
 
-	// Decode QR
-	const greenpassStr = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
-
-	//console.log(greenpassStr)
-	//if(greenpassStr === null) return null;
 
 	// Remove the "HC1:" heading
 	const greenpassBody = greenpassStr.data.substr(4);
@@ -201,7 +201,10 @@ function dgcDecodeQR(greenpassImageData) {
 
 
 
-
+//
+// Replace the DGC fields and minified keys with
+// their actual meaning
+//
 function dgcHumanReadable(greenpassJSON) {
 	// see 
 	// https://github.com/ehn-dcc-development/ehn-dcc-schema
@@ -335,6 +338,24 @@ function dgcHumanReadable(greenpassJSON) {
 				break;
 				}
 		}
+
+
+	// Decode the values (WIP)
+	for (p of Object.keys(HR)) {
+		switch (p) {
+			case("Vaccine"):
+				HR.Vaccine[0][schema.v[0]["tg"]] = "SARS-CoV-2"
+				break;
+			case("Recovery"):
+				HR.Recovery[0][schema.r[0]["tg"]] = "SARS-CoV-2"
+				break;
+			case("Test"):
+				HR.Test[0][schema.t[0]["tg"]] = "SARS-CoV-2"
+				break;
+			default:
+				break
+		}
+	}
 
 		return HR;
 	

@@ -21455,7 +21455,7 @@ const base45 = require('base45');
 const pako = require('pako');
 const cbor = require('cbor');
 
-console.log("😃")
+console.log("😃✔️👍")
 
 // new FileReader object
 let reader = new FileReader();
@@ -21491,27 +21491,13 @@ reader.addEventListener('load', async (e) => {
 	//console.log(width+" "+height)
 	
 	// Now we use a canvas to convert the dataurl image into an ImageData structure
-	// This is needed to decode the QR with jsQR 
+	// This is needed to decode the QR code with jsQR 
 	const canvas = document.querySelector("#qr-canvas")
 	//const canvas = document.createElement("canvas")
 	canvas.width = img.width;
 	canvas.height = img.height;
 	const context = canvas.getContext('2d')
 	
-	// See https://stackoverflow.com/questions/51869520/image-to-uint8array-in-javascript
-	async function imageDataUrlToImageData(image, context) {
-		return new Promise((resolve, reject) => {
-			context.width = image.width;
-			context.height = image.height;
-			context.drawImage(image, 0, 0);
-			resolve(context.getImageData(0,0,context.width, context.height));
-			
-			/* context.canvas.toBlob(blob => blob.arrayBuffer()
-			.then(buffer => resolve(new Uint8ClampedArray(buffer))).catch(reject)
-			) */
-		});
-		}
-
 	try {
 		const imgdata = await imageDataUrlToImageData(img, context)
 		let json = dgcDecodeQR(imgdata);
@@ -21525,27 +21511,26 @@ reader.addEventListener('load', async (e) => {
 		const textHR = JSON.stringify(jsonHR, null, 2)
 		document.querySelector("#hr-contents").textContent = textHR
 	}
-	catch(e) {
-		console.warn("NOT A DGC: "+e)
+	catch(err) {
+		console.warn("NOT A DGC: "+err)
 		//console.log(typeof e)
 		//console.log(e)
-		// TODO: show notification
-		const errtext = "This is (probably) not a Digital Green Certificate\nError: "+e;
-		document.querySelector("#contents").textContent = errtext
-		document.querySelector("#hr-contents").textContent = errtext
+		// Show error message
+		const errtext = "This is not a Digital Green Certificate\nError: "+err;
+		document.querySelector("#contents").textContent = errtext;
+		document.querySelector("#hr-contents").textContent = errtext;
 	}
 });
 
 
-/* document.querySelector("#qr-reader").addEventListener('change', () => {
+document.querySelector("#file-selector").addEventListener('change', event => {
 	// Load the image as a dataurl to get the correct image size.
-	// This is needed to create an ImageData structure
-	console.log(document.querySelector("#qr-reader").files)
-	reader.readAsDataURL(document.querySelector("#qr-reader").files[0]);
-}); */
+	// The ImageData constructor requires width and height
+	reader.readAsDataURL(event.target.files[0]);
+});
 
 
-
+// TOGGLE
 document.querySelector("#dgcHumanReadable").addEventListener("click", () => {
 	const toggle = document.querySelector("#dgcHumanReadable");
 	if (toggle.checked) {
@@ -21560,7 +21545,7 @@ document.querySelector("#dgcHumanReadable").addEventListener("click", () => {
 
 
 
-
+// DRAG & DROP
 const dropArea = document.getElementById('drop-area');
 
 dropArea.addEventListener('dragover', (event) => {
@@ -21578,36 +21563,56 @@ dropArea.addEventListener('drop', (event) => {
   reader.readAsDataURL(fileList[0]);
 });
 
-//dropArea.addEventListener('click', (event) => {
-document.querySelector("#file-selector").addEventListener('click', (event) => {
-	showOpenFilePicker({
-		multiple: false,
-		excludeAcceptAllOption: true,
-		types: [
-			{
-			  description: 'Images',
-			  accept: {
-				'image/*': ['.png', '.gif', '.jpeg', '.jpg']
+
+
+
+
+// FUNCTIONS
+
+
+// Convert a Data URL image into an ImageData structure via the Canvas API
+// See https://stackoverflow.com/questions/51869520/image-to-uint8array-in-javascript
+function imageDataUrlToImageData(image) {
+	const canvas = document.createElement("canvas");
+	const context = canvas.getContext("2d");
+	return imageDataUrlToImageData(image, context);
 			  }
+
+async function imageDataUrlToImageData(image, context) {
+	return new Promise((resolve, reject) => {
+		context.width = image.width;
+		context.height = image.height;
+		context.drawImage(image, 0, 0);
+
+		if (!context.width) {
+			canvas.width = 300;
+			canvas.height = 300;
+			reject("not a valid image file");
 			}
-		  ]
-		}
-	)
-	.catch(e => console.error("Cannot open file: "+e))
-	.then(async fileList => {
-		//console.log(fileList)
-		const file = await fileList[0].getFile()
-		//console.log(file)
-		reader.readAsDataURL(file);
-	})
+
+		resolve(context.getImageData(0,0,context.width, context.height));
+		
+		/* context.canvas.toBlob(blob => blob.arrayBuffer()
+		.then(buffer => resolve(new Uint8ClampedArray(buffer))).catch(reject)
+		) */
 });
+	}
 
 
-
-
-
-
+//
+// Green Pass decoding
+//
 function dgcDecodeQR(greenpassImageData) {
+	// Decode QR
+	const greenpassStr = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
+
+	//console.log(decodedGreenpass)
+	if(greenpassStr === null) throw "no QR code detected"
+
+	return dgcDecode(greenpassStr);
+}
+
+function dgcDecode(greenpassStr) {
 
 	// Digital Covid Certificate structure:
 	// [JSON Schema] ==> CBOR serialization ==> {headers; CBOR; COSE signature} => 
@@ -21616,11 +21621,6 @@ function dgcDecodeQR(greenpassImageData) {
 	// For more details, see Section 3 of:
 	// https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_v1_en.pdf
 
-	// Decode QR
-	const greenpassStr = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
-
-	//console.log(decodedGreenpass)
-	//if(decodedGreenpass === null) return null;
 
 	// Remove the "HC1:" heading
 	const greenpassBody = greenpassStr.data.substr(4);
@@ -21653,93 +21653,163 @@ function dgcDecodeQR(greenpassImageData) {
 
 
 
-
+//
+// Replace the DGC fields and minified keys with
+// their actual meaning
+//
 function dgcHumanReadable(greenpassJSON) {
 	// see 
 	// https://github.com/ehn-dcc-development/ehn-dcc-schema
 
+	const vaccineSchema = {
+		v: [
+				{
+				dn : "Dose number",
+				ma : "Manufacturer",
+				vp : "Vaccine or prophilaxis",
+				dt : "Date of Vaccination",
+				co : "Country of vaccination",
+				ci : "Unique Certificate Identifier",
+				mp : "Vaccine medicinal product",
+				is : "Certificate Issuer",
+				sd : "Total Series of Doses",
+				tg : "Disease or Agent Targeted"
+				}
+			],
+		nam : {
+			fnt : "Standardized surname(s)",
+			fn : "Surname(s)",
+			gnt : "Standardized name(s)",
+			gn : "Name(s)"
+			},
+		ver : "Schema Version",
+		dob : "Date of Birth"
+	};
+	const recoverySchema = {
+		r: [
+			{
+				du : "Certificate Valid Until",
+				co : "Country of Test",
+				ci : "Unique Certificate Identifier",
+				is : "Certficate Issuer",
+				tg : "Disease or Agent Targeted",
+				df : "Certificate Valid From",
+				fr : "Date of First positive NAA test result"
+		}
+		],
+		nam : {
+			fnt : "Standardized surname(s)",
+			fn : "Surname(s)",
+			gnt : "Standardized name(s)",
+			gn : "Name(s)"
+		},
+		ver : "Schema Version",
+		dob : "Date of Birth"
+	};
+	const testSchema = {
+		t: [
+				{
+				sc : "Date/Time of Sample Collection",
+				ma : "RAT Test name and manufacturer",
+				dr : "Date",
+				tt : "Type of Test",
+				nm : "NAA Test Name",
+				co : "Country of Test",
+				tc : "Testing Centre",
+				ci : "Unique Certificate Identifier",
+				is : "Certificate Issuer",
+				tg : "Disease or Agent Targeted",
+				tr : "Test Result",
+				}
+			],
+		nam : {
+			fnt : "Standardized surname(s)",
+			fn : "Surname(s)",
+			gnt : "Standardized name(s)",
+			gn : "Name(s)"
+			},
+		ver : "Schema Version",
+		dob : "Date of Birth"
+	};
+
+	let schema = null;
 	if (greenpassJSON["v"]) {
 		//Vaccine
-		const HR = {
-			"Vaccine" : [
-				{
-					"Dose number": greenpassJSON.v[0]["dn"],
-					"Manufacturer": greenpassJSON.v[0]["ma"],
-					"Vaccine or prophilaxis": greenpassJSON.v[0]["vp"],
-					"Date of Vaccination": greenpassJSON.v[0]["dt"],
-					"Country of Vaccination": greenpassJSON.v[0]["co"],
-					"Unique Certificate Identifier (UCVI)": greenpassJSON.v[0]["ci"],
-					"Vaccine medicinal product (Vaccine name)": greenpassJSON.v[0]["mp"],
-					"Certificate Issuer": greenpassJSON.v[0]["is"],
-					"Total Series of Doses": greenpassJSON.v[0]["sd"],
-					"Disease or agent targeted": greenpassJSON.v[0]["tg"]
-				}
-			],
-			"Person name": {
-				"Standardized surname": greenpassJSON.nam["fnt"],
-				"Surname": greenpassJSON.nam["fn"],
-				"Standardized forename": greenpassJSON.nam["gnt"],
-				"Forename": greenpassJSON.nam["gn"],
-			},
-			"Schema Version": greenpassJSON["ver"],
-			"Date of Birth": greenpassJSON["dob"]
+		schema = vaccineSchema;
 		}
-		return HR;
-	}
 	else if (greenpassJSON["r"]) {
 		// Recovery
-		const HR = {
-			"Recovery": [
-				{
-					"Certificate Valid Until": greenpassJSON.r[0]["du"],
-					"Country of Test": greenpassJSON.r[0]["co"],
-					"Unique Certificate Identifier (UCVI)": greenpassJSON.r[0]["ci"],
-					"Certificate Issuer": greenpassJSON.r[0]["is"],
-					"Disease or agent targeted": greenpassJSON.r[0]["tg"],
-					"Certificate Valid From": greenpassJSON.r[0]["df"],
-					"Date of first positive NAA test result": greenpassJSON.r[0]["fr"]
-				}
-			],
-			"Person name": {
-				"Standardized surname": greenpassJSON.nam["fnt"],
-				"Surname": greenpassJSON.nam["fn"],
-				"Standardized forename": greenpassJSON.nam["gnt"],
-				"Forename": greenpassJSON.nam["gn"],
-			},
-			"Schema Version": greenpassJSON["ver"],
-			"Date of Birth": greenpassJSON["dob"]
-		}
-		return HR;
+		schema = recoverySchema;
 	}
 	else if (greenpassJSON["t"]) {
 		// Test
-		const HR = {
-			"Test": [
-				{
-					"Date/Time of Sample Collection": greenpassJSON.t[0]["sc"],
-					"RAT Test name and manufacturer": greenpassJSON.t[0]["ma"],
-					"Date of result ??": greenpassJSON.t[0]["dr"],
-					"Type of Test": greenpassJSON.t[0]["tt"],
-					"NAA Test name": greenpassJSON.t[0]["nm"],
-					"Country of Test": greenpassJSON.t[0]["co"],
-					"Testing Centre": greenpassJSON.t[0]["tc"],
-					"Unique Certificate Identifier (UCVI)": greenpassJSON.t[0]["ci"],
-					"Certificate Issuer": greenpassJSON.t[0]["is"],
-					"Disease or agent targeted": greenpassJSON.t[0]["tg"],
-					"Test result": greenpassJSON.t[0]["rt"]
-				}
-			],
-			"Person name": {
-				"Standardized surname": greenpassJSON.nam["fnt"],
-				"Surname": greenpassJSON.nam["fn"],
-				"Standardized forename": greenpassJSON.nam["gnt"],
-				"Forename": greenpassJSON.nam["gn"],
-			},
-			"Schema Version": greenpassJSON["ver"],
-			"Date of Birth": greenpassJSON["dob"]
-		}
-		return HR;
+		schema = testSchema;
 	}
+
+	// if(schema === null) throw "invalid schema"
+	const HR = {};
+	//console.log(greenpassJSON)
+	for (p of Object.keys(greenpassJSON)) {
+		//console.log(p)
+
+		switch(p) {
+			case "v":
+				HR.Vaccine = [{}];
+				for (pp of Object.keys(greenpassJSON.v[0])) {
+					//console.log("\t"+pp+": "+schema.v[0][pp])
+					HR.Vaccine[0][schema.v[0][pp]] = greenpassJSON.v[0][pp]
+				}
+				break;
+			case "r":
+				HR.Recovery = [{}];
+				for (pp of Object.keys(greenpassJSON.r[0])) {
+					HR.Recovery[0][schema.r[0][pp]] = greenpassJSON.r[0][pp]
+				}
+				break;
+			case "t":
+				HR.Test = [{}];
+				for (pp of Object.keys(greenpassJSON.t[0])) {
+					HR.Test[0][schema.t[0][pp]] = greenpassJSON.t[0][pp]
+				}
+				break;
+
+			case "nam":
+				HR.Name = {};
+				for (pp of Object.keys(greenpassJSON.nam))
+					HR.Name[schema.nam[pp]] = greenpassJSON.nam[pp]
+				break;
+			case "ver":
+				HR[schema[p]] = greenpassJSON[p]
+				break;
+			case "dob":
+				HR[schema[p]] = greenpassJSON[p]
+				break;
+			default:
+				console.warn(p);
+				//throw "Invalid field: "+p
+				break;
+				}
+		}
+
+
+	// Decode the values (WIP)
+	for (p of Object.keys(HR)) {
+		switch (p) {
+			case("Vaccine"):
+				HR.Vaccine[0][schema.v[0]["tg"]] = "SARS-CoV-2"
+				break;
+			case("Recovery"):
+				HR.Recovery[0][schema.r[0]["tg"]] = "SARS-CoV-2"
+				break;
+			case("Test"):
+				HR.Test[0][schema.t[0]["tg"]] = "SARS-CoV-2"
+				break;
+			default:
+				break
+		}
+	}
+
+		return HR;
 	
 }
 },{"base45":1,"cbor":3,"jsqr":14,"pako":16}],33:[function(require,module,exports){
