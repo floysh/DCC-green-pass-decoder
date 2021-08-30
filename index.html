@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-switch@2.0.0/dist/css/bulma-switch.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <script src="bundle.js" defer></script>
+
+    <title>Digital Green Certificate decoder</title>
+
+</head>
+<body>
+    <div class="main">
+        <div class="section">
+            <div class="container title">
+                <h1 class="title">Digital Green Certificate decoder</h1>
+            </div>
+
+            <div class="container block top-notification-bar">
+                <div class="notification is-warning is-light">
+                    <button class="delete " onClick="this.parentElement.remove()">Dismiss</button>
+                    <div class="notification-title">
+                        <div class="content">
+                            <h4 class="title">⚠️ Disclaimer</h4>
+                        </div>
+                    </div>
+                    <div class="notification-body">
+                        <div class="content">
+                            <p>
+                                This is <u>not an official validation tool</u> but a mere viewer of what's inside the European Digital Covid Certificate QR code. 
+                                As it doesn't check for any signature, <strong><u>this app cannot detect if the certificate is legit or a counterfeit</u></strong>. If you need to check for authenticity, please use the official app provided by your country institutions.
+                            </p>
+                            <p>
+                                For Italy, the official Digital Green Certificate verification app is VerificaC19. 
+                                You can read more about it and download it from the 
+                                <a href="https://www.dgc.gov.it/web/app.html">
+                                    <span>official government site</span> 
+                                    <span><i class="fas fa-external-link-alt"></i></i></span>
+                                </a>
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="container block">
+                <div class="notification is-info is-light">
+                    <div class="mb-2">
+                        <strong>🕵️‍♀️ Privacy</strong>
+                    </div>
+                    <div class="block">
+                        This app works entirely on your device and doesn't upload your data anywhere. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="container block">
+                <!-- <input type="file" class="button" name="reader" id="qr-reader" accept=".jpg, .jpeg, .png"/> -->
+                <!-- <div class="file has-name">
+                    <label class="file-label">
+                      <input class="file-input" type="file" name="reader" id="qr-reader" accept=".jpg, .jpeg, .png">
+                      <span class="file-cta">
+                        <span class="file-icon">
+                          <i class="fas fa-upload"></i>
+                        </span>
+                        <span class="file-label">
+                          Choose a file…
+                        </span>
+                        </span>
+                        <span class="file-name">
+                            None
+                        </span>
+                    </label>
+                </div> -->
+                <!-- <button class="button" id="decode-button">Decode</button> -->
+                <div class="content">
+                    Have you ever wondered what's actually inside your EU Digital Green Certificate/Digital Covid Certificate? 
+                    
+                </div>
+            </div>
+            <div class="container block">
+                <div class="columns">
+                    <div class="column file-selector-col">
+                        <div class="container">
+                            <h3 class="subtitle">Preview</h3>
+                            
+                            <div class="box" id="drop-area">
+                                <div class="container">
+                                    <div class="content has-text-centered">
+                                        <div class="is-size-1">
+                                            <i class="fas fa-qrcode"></i>
+                                        </div>
+                                        <p>
+                                            Drag & Drop a QR code on this box  
+                                        </p>
+                                        <div class="content">
+                                            <div class="container is-flex is-justify-content-center is-align-self-center is-align-items-center">
+                                                <span>or</span>
+                                                <span class="mr-2 ml-2"> </span>
+                                                <span>
+                                                    <button class="button is-primary" id="file-selector">Select a file</button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="drop-area">
+
+                                    </div>
+    
+                                    <div class="canvas-wrapper">
+                                        <canvas id="qr-canvas">This browser doesn't support HTML5 Canvas. This app might not work properly without the canvas API. Please switch to a supported browser</canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="container block">
+                            <h3 class="subtitle">Content</h3>
+                            <pre id="contents" hidden></pre>
+                            <pre id="hr-contents"></pre>
+                        </div>
+                        <div class="field has-text-right">
+                            <input id="dgcHumanReadable" type="checkbox" class="switch is-rounded" checked>
+                            <label for="dgcHumanReadable">Human Readable</label>
+                          </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer has-text-centered">
+        <div class="content">
+            <div class="title has-text-1">
+                🍕
+            </div>
+            <div>
+                Made with ❤️ in Italy
+            </div>
+        </div>
+        <div class="content">
+            <span>
+                This project is open source |  
+            </span>
+            <span class="ml-2 mr-1">
+                <i class="fab fa-github"></i>
+            </span>
+            <span>
+                <a href="https://github.com/floysh/DCC-green-pass-decoder">Github Repo</a>
+            </span>
+        </div>
+    </div>
+</body>

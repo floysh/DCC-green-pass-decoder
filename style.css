@@ -1,0 +1,32 @@
+body {
+    font-family: 'Noto Sans', sans-serif;
+}
+
+#qr-canvas {
+    max-width: 20rem;
+}
+
+.canvas-wrapper {
+    display: flex; 
+	justify-content: center; /* center horizontally */ 
+	align-items: center;
+    min-height: 16rem;
+}
+
+
+.drop-area {
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.drop-area .icon {
+    font-size: 8rem;
+}
+
+@media screen and (min-width: 769px), print {
+.file-selector-col {
+    max-width: 28rem;
+}
+}
+  
