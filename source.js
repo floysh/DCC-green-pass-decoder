@@ -5,6 +5,88 @@ const cbor = require('cbor');
 
 console.log("😃✔️👍")
 
+
+const valueSets = {
+	"test-manf" : {
+		abbr: "ma",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-manf.json",
+		json: null
+	},
+	"country-codes": {
+		abbr: "co",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/country-2-codes.json",
+		json: null
+	},
+	"disease-agent-targeted": {
+		abbr: "tg",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/disease-agent-targeted.json",
+		json: null
+	},
+	"test-result": {
+		abbr: "tr",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-result.json",
+		json: null
+	},
+	"test-type": {
+		abbr: "tt",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-type.json",
+		json: null
+	},
+	"vaccine-mah-manf": {
+		abbr: "ma",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-mah-manf.json",
+		json: null
+	},
+	"vaccine-medicinal-product": {
+		abbr: "mp",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-medicinal-product.json",
+		json: null
+	},
+	"vaccine-prophilaxis": {
+		abbr: "vp",
+		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-prophylaxis.json",
+		json: null
+	}
+}
+
+let valueSetsLoaded = false;
+
+function decodeValue(valueType, id) {
+	const valueSet = valueSets[valueType].json;
+	if (!valueSet) {
+		console.warn("ValueSets not loaded for: "+id)
+		return id;
+	}
+	else {
+		return (valueSet.valueSetValues[id]) ? valueSet.valueSetValues[id].display : id;
+	}
+}
+
+function loadValueSets() {
+	// Load the valuesets
+	const promises = []
+	Object.keys(valueSets).forEach( k => {
+		const elem = valueSets[k];
+		promises.push(
+			fetch(elem.url)
+			.then(res => res.json())
+			.then(json => elem.json = json)
+		)
+		//console.log(elem.url)
+	})
+
+	Promise.all(promises).then(() => {
+		//console.log(valueSets);
+		//console.log(decodeValue("test-manf","8545"))
+		valueSetsLoaded = true;
+	})
+}
+
+window.addEventListener("load", loadValueSets());
+
+
+
+
 // new FileReader object
 let reader = new FileReader();
 
@@ -57,7 +139,7 @@ reader.addEventListener('load', async (e) => {
 		
 		const jsonHR= dgcHumanReadable(json);
 		const textHR = JSON.stringify(jsonHR, null, 2)
-		document.querySelector("#hr-contents").textContent = textHR
+		document.querySelector("#hr-contents").textContent = textHR.replace(/"",/g, "(not specified)").replace(/",/g, "").replace(/"/g, "")
 	}
 	catch(err) {
 		console.warn("NOT A DGC: "+err)
@@ -160,6 +242,7 @@ async function dgcDecodeQR(greenpassImageData) {
 		const greenpass = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
 		
 		if(greenpass === null) throw "no QR code detected"
+		if (greenpass.data.substr(0,4) !== "HC1:") throw `the decoded string\n"${greenpass.data}"\nis missing the HC1 header`
 
 		return dgcDecode(greenpass.data);
 	} 
@@ -313,6 +396,9 @@ function dgcHumanReadable(greenpassJSON) {
 	}
 
 	// if(schema === null) throw "invalid schema"
+
+	// Decode the keys
+	// See: https://github.com/ehn-dcc-development/ehn-dcc-schema
 	const HR = {};
 	//console.log(greenpassJSON)
 	for (p of Object.keys(greenpassJSON)) {
@@ -360,205 +446,54 @@ function dgcHumanReadable(greenpassJSON) {
 
 	// Decode the values
 	// https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_dt-specifications_en.pdf
+	let fields = [];
 	for (p of Object.keys(HR)) {
 		switch (p) {
 			case("Vaccine"):
-				HR.Vaccine[0][schema.v[0]["tg"]] = "SARS-CoV-2";
+				//const obj = HR.Vaccine[0]
+				fields = schema.v[0]
+				HR.Vaccine[0][fields["co"]] = decodeValue("country-codes", HR.Vaccine[0][fields["co"]]);
+				HR.Vaccine[0][fields["tg"]] = decodeValue("disease-agent-targeted", HR.Vaccine[0][fields["tg"]]);
 				
-				const vaccineprophilaxis = HR.Vaccine[0][schema.v[0]["vp"]];
-				switch(vaccineprophilaxis) {
-					case "1119305005":
-						HR.Vaccine[0][schema.v[0]["vp"]] = "SARS-CoV-2 antigen vaccine";
-						break;
-					case "1119349007":
-						HR.Vaccine[0][schema.v[0]["vp"]] = "SARS-CoV-2 mRNA vaccine";
-						break;
-					case "J07BX03":
-						HR.Vaccine[0][schema.v[0]["vp"]] = "covid-19 vaccines";
-						break;
+				HR.Vaccine[0][fields["mp"]] = decodeValue("vaccine-medicinal-product", HR.Vaccine[0][fields["mp"]]);
+				HR.Vaccine[0][fields["ma"]] = decodeValue("vaccine-mah-manf", HR.Vaccine[0][fields["ma"]]);
+				HR.Vaccine[0][fields["vp"]] = decodeValue("vaccine-prophilaxis", HR.Vaccine[0][fields["vp"]]);
 
-					default:
-						break;
-
-				}
-				
-				const product = HR.Vaccine[0][schema.v[0]["mp"]];
-				switch(product) {
-					case "EU/1/20/1528": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Comirnaty";
-						break;
-					case "EU/1/20/1507": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "COVID-19 Vaccine Moderna";
-						break;
-					case "EU/1/21/1529": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Vaxzevria";
-						break;
-					case "EU/1/20/1525": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "COVID-19 Vaccine Janssen";
-						break;
-					case "CVnCoV": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "CVnCoV";
-						break;
-					case "Sputnik-V": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Sputnik V";
-						break;
-					case "Convidecia": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Convidecia";
-						break;
-					case "EpiVacCorona": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "EpiVacCorona";
-						break;
-					case "BBIBP-CorV": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "BBIBP-CorV";
-						break;
-					case "Inactivated-SARS-CoV-2-Vero-Cell": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Inactivated-SARS-CoV-2 Vero-Cell)";
-						break;
-					case "CoronaVac": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "CoronaVac";
-						break;
-					case "Covaxin": 
-						HR.Vaccine[0][schema.v[0]["mp"]] = "Covaxin (also known as BBV152 A, B, C)";
-						break;
-					default: break;
-				}
-
-				const manufacturer = HR.Vaccine[0][schema.v[0]["ma"]];
-				switch(manufacturer) {
-					case "ORG-100001699":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "AstraZeneca AB";
-						break;
-					case "ORG-100030215":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Biontech Manufacturing GmbH";
-						break;
-					case "ORG-100001417":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Janssen-Cilag International";
-						break;
-					case "ORG-100031184":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Moderna Biotech Spain S.L.";
-						break;
-					case "ORG-100006270":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Curevac AG";
-						break;
-					case "ORG-100013793":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "CanSino Biologics";
-						break;
-					case "ORG-100020693":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "China Sinopharm International Corp. - Beijing location";
-						break;
-					case "ORG-100010771":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Sinopharm Weiqida Europe Pharmaceutical s.r.o. - Prague location";
-						break;
-					case "ORG-100024420":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Sinopharm Zhijun (Shenzhen) Pharmaceutical Co. Ltd. - Shenzhen";
-						break;
-					case "ORG-100032020":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Novavax CZ AS";
-						break;
-					case "Gamaleya-Research-Institute":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Gamaleya Research Institute";
-						break;
-					case "Vector-Institute":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Vector Institute";
-						break;
-					case "Sinovac-Biotech":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Sinovac Biotech";
-						break;
-					case "Bharat-Biotech":
-						HR.Vaccine[0][schema.v[0]["ma"]] = "Bharat Biotech";
-						break;
-					default:
-						break;
-				}
-				// END of Vaccine tag
 				break;
-
+			
 			case("Recovery"):
-				HR.Recovery[0][schema.r[0]["tg"]] = "SARS-CoV-2"
+				fields = schema.r[0];
+				HR.Recovery[0][fields["co"]] = decodeValue("country-codes", HR.Recovery[0][fields["co"]]);
+				HR.Recovery[0][fields["tg"]] = decodeValue("disease-agent-targeted", HR.Recovery[0][fields["tg"]]);
 
-				HR.Recovery[0][schema.r[0]["du"]] = dateFormat(HR.Recovery[0][schema.r[0]["du"]]);
-				HR.Recovery[0][schema.r[0]["df"]] = dateFormat(HR.Recovery[0][schema.r[0]["df"]]);
-				HR.Recovery[0][schema.r[0]["fr"]] = dateFormat(HR.Recovery[0][schema.r[0]["fr"]]);
-
-
-				// END of RECOVERY field
 				break;
-
+			
 			case("Test"):
-				HR.Test[0][schema.t[0]["tg"]] = "SARS-CoV-2";
-
-				const typeoftest = HR.Test[0][ schema.t[0]["tt"] ];
-				switch(typeoftest) {
-					case "LP6464-4":
-						HR.Test[0][schema.t[0]["tt"]] = "Nucleic acid amplification with probe detection";
-						break;
-					case "LP217198-3":
-						HR.Test[0][schema.t[0]["tt"]] = "Rapid immunoassay";
-						break;
-					default: break;					
-				}
-
-				const RATmanufacturer = HR.Test[0][schema.t[0]["ma"]];
-				// TODO: function to parse this database
-				//https://covid-19-diagnostics.jrc.ec.europa.eu/devices/hsc-common-recognition-rat
-				HR.Test[0][schema.t[0]["ma"]] = decodeRATManufacturer(HR.Test[0][schema.t[0]["ma"]])
-
-				const testResult = HR.Test[0][schema.t[0]["tr"]];
-				switch(testResult) {
-					case "260415000":
-						HR.Test[0][schema.t[0]["tr"]] = "Not detected";
-						break;
-					case "260373001":
-						HR.Test[0][schema.t[0]["tr"]] = "Detected";
-						break;
-					default : break;
-				}
+				fields = schema.t[0];
+				HR.Test[0][fields["co"]] = decodeValue("country-codes", HR.Test[0][fields["co"]]);
+				HR.Test[0][fields["tg"]] = decodeValue("disease-agent-targeted", HR.Test[0][fields["tg"]]);
+				
+				HR.Test[0][fields["ma"]] = decodeValue("test-manf", HR.Test[0][fields["ma"]]);
+				HR.Test[0][fields["tt"]] = decodeValue("test-type", HR.Test[0][fields["tt"]]);
+				HR.Test[0][fields["tr"]] = decodeValue("test-result", HR.Test[0][fields["tr"]]);
 
 				// Dates
-				HR.Test[0][schema.t[0]["sc"]] = dateFormat(HR.Test[0][schema.t[0]["sc"]]);
-				HR.Test[0][schema.t[0]["dr"]] = dateFormat(HR.Test[0][schema.t[0]["dr"]]);
-
-
+				HR.Test[0][fields["sc"]] = dateFormat(HR.Test[0][fields["sc"]]);
+				HR.Test[0][fields["dr"]] = dateFormat(HR.Test[0][fields["dr"]]);
+				
 				break;
-
-			default:break
+		
+			default: break;
 		}
 	}
 
-		return HR;
-	
-}
-
-
-
-
-function decodeRATManufacturer(id) {
-	// Note that the official endpoint of RAT devices doesn't allow CORS
-	// https://covid-19-diagnostics.jrc.ec.europa.eu/devices/hsc-common-recognition-rat
-	// So we use a local copy instead 
-
-	const RATDB = require("./hsc-common-recognition-rat.json")
-	
-	//RATDB.deviceList.forEach(elem => {
-	for (let elem of RATDB.deviceList) {
-		if (elem.id_device === id) {
-			return `${elem.commercial_name} - ${elem.manufacturer.name} (${elem.manufacturer.country})`;
-		}
-	}
-	// If this instruction is reached, the id is not in the DB
-	return id;
-
+	return HR;
 }
 
 
 function dateFormat(dateStr) {
 	const locale = (navigator.language) ? navigator.language : "en";
 
-	/* return Intl.DateTimeFormat(locale, {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	  }).format(new Date("2021-05-03T10:27:15Z")) ; */
 	const date = new Date(dateStr);
-	return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'medium' }).format(date);
+	return Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
 }
