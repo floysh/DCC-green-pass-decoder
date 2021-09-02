@@ -15,6 +15,6 @@
   },
   "scripts": {
     "start": "watchify source.js -o bundle.js",
-    "build": "browserify source.js -o bundle.js && uglifyjs bundle.js --compress -o bundle.js"
+    "build": "browserify src/source.js -o bundle.js && uglifyjs bundle.js --compress -o bundle.js"
   }
 }
