@@ -24,115 +24,307 @@
     <div class="main">
         <div class="section">
             <div class="container title">
-                <h1 class="title">Digital Green Certificate decoder</h1>
+                <h1 class="title">EU Digital COVID Certificate decoder</h1>
             </div>
-
-            <div class="container block top-notification-bar">
-                <div class="notification is-warning is-light">
-                    <button class="delete " onClick="this.parentElement.remove()">Dismiss</button>
-                    <div class="notification-title">
-                        <div class="content">
-                            <h4 class="title">⚠️ Disclaimer</h4>
-                        </div>
+            <div class="container block">
+                <div class="notification is-info is-light">
+                    <div class="mb-2">
+                        <strong>🕵️‍♀️ Privacy</strong>
                     </div>
-                    <div class="notification-body">
-                        <div class="content">
-                            <p>
-                                This is <u>not an official validation tool</u> but a mere viewer of what's inside the European Digital Covid Certificate QR code. 
-                                As it doesn't check for any signature, <strong><u>this app cannot detect if the certificate is legit or a counterfeit</u></strong>. If you need to check for authenticity, please use the official app provided by your country institutions.
-                            </p>
-                            <p>
-                                For Italy, the official Digital Green Certificate verification app is VerificaC19. 
-                                You can read more about it and download it from the 
-                                <a href="https://www.dgc.gov.it/web/app.html">
-                                    <span>official government site</span> 
-                                    <span><i class="fas fa-external-link-alt"></i></i></span>
-                                </a>
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="container block">
-                    <div class="notification is-info is-light">
-                        <div class="mb-2">
-                            <strong>🕵️‍♀️ Privacy</strong>
-                        </div>
-                        <div class="block">
-                            This app works entirely on your device and doesn't upload your data anywhere. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
-                        </div>
+                    <div class="block">
+                        This app works entirely on your device and doesn't upload your data anywhere. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
                     </div>
                 </div>
             </div>
 
-            <div class="container block mt-6">
-                <div class="columns">
-                    <div class="column file-selector-col">
-                        <div class="container content block">
-                            <h3 class="subtitle">Preview</h3>
-                            
-                            <div class="box" id="drop-area">
-                                <div class="container">
-                                    <div class="content has-text-centered">
-                                        <div class="is-size-1">
-                                            <i class="fas fa-qrcode"></i>
-                                        </div>
-                                        <p>
-                                            Drag & Drop a QR code on this box  
-                                        </p>
-                                        <div class="content">
-                                            <div class="container is-flex is-justify-content-center is-align-self-center is-align-items-center">
-                                                <span>or</span>
-                                                <span class="mr-2 ml-2"> </span>
-                                                <span>
-                                                    <div class="file">
-                                                    <label class="file-label">
-                                                        <input class="file-input" type="file" name="reader" id="file-selector" accept=".jpg, .jpeg, .png, .bmp, .webp">
-                                                        <span class="button file-cta is-primary">
-                                                            <span class="file-icon">
-                                                                <i class="fas fa-upload"></i>
-                                                            </span>
-                                                            <span class="file-label">
-                                                                Choose a file
-                                                            </span>
+            <div class="container pt-5">
+                <div class="columns is-variable is-6">
+                                <div class="column">
+                                    <div class="box" id="drop-area">
+                                        <div class="container">
+                                            <div class="content has-text-centered">
+                                                <div class="is-size-1">
+                                                    <i class="fas fa-qrcode"></i>
+                                                </div>
+                                                <p>
+                                                    Drag & Drop a QR code on this box  
+                                                </p>
+                                                <div class="content">
+                                                    <div class="container is-flex is-justify-content-center is-align-self-center is-align-items-center">
+                                                        <span>or</span>
+                                                        <span class="mr-2 ml-2"> </span>
+                                                        <span>
+                                                            <div class="file">
+                                                            <label class="file-label">
+                                                                <input class="file-input" type="file" name="reader" id="file-selector" accept=".jpg, .jpeg, .png, .bmp, .webp">
+                                                                <span class="button file-cta is-primary">
+                                                                    <span class="file-icon">
+                                                                        <i class="fas fa-upload"></i>
+                                                                    </span>
+                                                                    <span class="file-label">
+                                                                        Choose a file
+                                                                    </span>
+                                                                </span>
+                                                                </label>
+                                                            </div>
                                                         </span>
-                                                        </label>
                                                     </div>
-                                                </span>
+                                                </div>
+                                            </div>
+            
+                                            <div class="canvas-wrapper">
+                                                <canvas id="qr-canvas"  height=300 width=300>
+                                                    This browser doesn't support HTML5 Canvas. 
+                                                    This app might not work properly without the canvas API. 
+                                                    Please switch to a supported browser
+                                                </canvas>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="drop-area">
+                        <div class="container-fluid has-text-right mt-5">
+                            <span class="pr-3">
+                                            <label for="dgcHumanReadable" class="mr-2">Human Readable</label>
+                                        </span>
+                                        <span class="field pr-3">
+                                            <input id="dgcHumanReadable" type="checkbox" class="switch is-rounded" checked>
+                                            <label for="dgcHumanReadable"></label>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                
+                    <div class="column is-two-thirds mt-5">
+                                    <div id="dgc-code" hidden>
+                                        <span class="label is-size-5">Decoded content</span>
+                                        <pre><code id="dgc-json"></code></pre>
+                                    </div>
+                                    <div id="dgc-hr" hidden>
+                            <div class="notification is-danger is-light mb-6" id="error-bar" hidden>
+                                            <div class="mb-2">
+                                                <strong>❌ This is not an EU Digital COVID Certificate</strong>
+                                            </div>
+                                            <div class="container">
+                                                <div class="content">
+                                                    <span>Reason:</span>
+                                                    <span id="error-text"></span>
+                                                </div>
+                                                <div class="text-breakable content">
+                                                    <span>QR content: </span>
+                                                    <span id="qr-decoded-content" class="text-breakable"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-5">
+                                            <div class="field">
+                                                <div>
+                                                    <span class=" is-size-5 mr-2"><b>Certificate Type: </b></span>
+                                                    <b><span id="cert-type" class="has-text-primary is-size-5">[unknown]</span></b>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <span class=" is-size-6 mr-2">Schema version: </span>
+                                                    <span id="ver" class="is-size-6"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+        
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <span class="label">Surame(s)</span>
+                                                    <input type="text" id="fn" class="dgc input" placeholder="e.g Di Caprio" readonly>
+                                                </div>
+                                                <div class="field">
+                                                    <span class="label">Name(s)</span>
+                                                    <input type="text" id="gn" class="dgc input" placeholder="e.g Marilù Teresa" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <span class="label">Standardized surame(s)</span>
+                                                    <input type="text" id="fnt" class="dgc input" placeholder="e.g DI>CAPRIO" readonly>
+                                                </div>
+                                                <div class="field">
+                                                    <span class="label">Standardized name(s)</span>
+                                                    <input type="text" id="gnt" class="dgc input" placeholder="e.g MARILU>TERESA" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="field">
+                                            <span class="label">Date of birth</span>
+                                            <input type="text" id="dob" class="dgc input" placeholder="e.g 1987-06-12" readonly>
+                                        </div>
+        
+                                        <div class="mt-6" id="vaccination-group" hidden>
+                                            <div class="field">
+                                                <span class="label">Unique Certificate Identifier (UVCI) </span>
+                                                <input type="text" id="v-ci" class="dgc input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Dose number / Total Series of Doses </span>
+                                                <input type="text" id="v-dn-sd" class="dgc vaccine input" placeholder="e.g 1/2" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Date of vaccination</span>
+                                                <input type="text" id="v-dt" class="dgc vaccine input" placeholder="e.g 2021-05-18" readonly>
+                                            </div>                                            
+                                            <div class="field">
+                                                <span class="label">Vaccine or prophilaxis</span>
+                                                <input type="text" id="v-vp" class="dgc vaccine input" placeholder="e.g SARS-CoV-2 mRNA vaccine" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Vaccine medicinal product</span>
+                                                <input type="text" id="v-mp" class="dgc vaccine input" placeholder="e.g Comirnaty" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Vaccine manufacturer or Marketing Authorization Holder</span>
+                                                <input type="text" id="v-ma" class="dgc vaccine input" placeholder="e.g Biontech Manufacturing GmbH" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Disease or Agent Targeted</span>
+                                                <input type="text" id="v-tg" class="dgc vaccine input" placeholder="e.g COVID-19" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Country of vaccination</span>
+                                                <input type="text" id="v-co" class="dgc vaccine input" placeholder="e.g Italy" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Certificate Issuer</span>
+                                                <input type="text" id="v-is" class="dgc vaccine input" placeholder="e.g Ministero della Salute" readonly>
+                                            </div>
+                                            
+                                        </div>
+        
+                                        <div class="mt-6"  id="test-group" hidden>
+                                            <div class="field">
+                                                    <span class="label">Unique Certificate Identifier (UVCI) </span>
+                                                    <input type="text" id="t-ci" class="dgc test input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
+                                                </div>
+
+                                <div class="columns">
+                                    <div class="column">
+                                        <div class="field">
+                                                <span class="label">Sample Collected at</span>
+                                                <input type="text" id="t-sc" class="dgc test input" placeholder="e.g May 3, 2021, 12:27:15 PM GMT+2" readonly>
+                                            </div>
+                                            </div>
+                                    <div class="column">
+                                            <div class="field">
+                                                <span class="label">Date of result</span>
+                                                <input type="text" id="t-dr" class="dgc test input" placeholder="e.g May 11, 2021, 2:27:15 PM GMT+2" readonly>
+                                            </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="field">
+                                    <span class="label">RAT Test name and manufacturer</span>
+                                    <input type="text" id="t-ma" class="dgc test input" placeholder="(none)" readonly>
+                                </div>
+                                            <div class="field">
+                                                <span class="label">Test Type</span>
+                                                <input type="text" id="t-tt" class="dgc test input" placeholder="e.g Nucleic acid amplification with probe detection" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">NAA Test Name</span>
+                                                <input type="text" id="t-nm" class="dgc test input" placeholder="e.g Roche LightCycler qPCR" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Country of test</span>
+                                                <input type="text" id="t-co" class="dgc test input" placeholder="e.g Italy" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Testing centre</span>
+                                                <input type="text" id="t-tc" class="dgc test input" placeholder="e.g Policlinico Umberto I" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Certificate issuer</span>
+                                                <input type="text" id="t-is" class="dgc test input" placeholder="e.g Ministero della Salute" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Disease or agent targeted</span>
+                                                <input type="text" id="t-tg" class="dgc test input" placeholder="e.g COVID-19" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Test result</span>
+                                                <input type="text" id="t-tr" class="dgc test input" placeholder="e.g Not detected" readonly>
+                                            </div>
+                                        </div>
+        
+        
+                                        <div class="mt-6" id="recovery-group" hidden>
+                                            <div class="field">
+                                                <span class="label">Unique Certificate Identifier (UVCI) </span>
+                                                <input type="text" id="r-ci" class="dgc recovery input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
+                                            </div>
+                                            <div class="columns">
+                                                <div class="column">
+                                                    <div class="field">
+                                                        <span class="label">Certificate valid from</span>
+                                                        <input type="text" id="r-df" class="dgc recovery input" placeholder="e.g 2021-04-05" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="column">
+                                                    <div class="field">
+                                                        <span class="label">Certificate valid until</span>
+                                                        <input type="text" id="r-du" class="dgc recovery input" placeholder="e.g 2021-10-31" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Country</span>
+                                                <input type="text" id="r-co" class="dgc recovery input" placeholder="e.g Austria" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Certificate issuer</span>
+                                                <input type="text" id="r-is" class="dgc recovery input" placeholder="e.g Ministerio de la Sanidad" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Disease or agent targeted</span>
+                                                <input type="text" id="r-tg" class="dgc recovery input" placeholder="e.g COVID-19" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Date of First positive NAA test result</span>
+                                                <input type="text" id="r-fr" class="dgc recovery input" placeholder="e.g 2021-04-03" readonly>
+                                            </div>
+                                        </div>
 
                                     </div>
     
-                                    <div class="canvas-wrapper">
-                                        <canvas id="qr-canvas"  height=300 width=300>
-                                            This browser doesn't support HTML5 Canvas. 
-                                            This app might not work properly without the canvas API. 
-                                            Please switch to a supported browser
-                                        </canvas>
-                                    </div>
+    
                                 </div>
                             </div>
+                        </div>
+        
+                    </div>
 
-                        </div>
-                    </div>
-                    <div class="column">
-                        <div class="container content block">
-                            <h3 class="subtitle">Content</h3>
-                            <div class="block">
-                                <pre><code id="contents" hidden></code><code id="hr-contents"></code></pre>
-                            </div>
-                        </div>
-                        <div class="field has-text-right pr-3">
-                            <input id="dgcHumanReadable" type="checkbox" class="switch is-rounded" checked>
-                            <label for="dgcHumanReadable">Human Readable</label>
-                          </div>
-                    </div>
+    </div>
+    <div class="container">
+        <div class="notification is-warning is-light">
+            <button class="delete " onClick="this.parentElement.remove()">Dismiss</button>
+            <div class="notification-title">
+                <div class="content">
+                    <h4 class="title">⚠️ Disclaimer</h4>
                 </div>
             </div>
+            <div class="notification-body">
+                <div class="content">
+                    <p>
+                        This is <u>not an official validation tool</u> but a mere viewer of what's inside the European Digital Covid Certificate QR code. 
+                        As it doesn't check for any signature, <strong><u>this app cannot detect if the certificate is legit or a counterfeit</u></strong>. If you need to check for authenticity, please use the official app provided by your country institutions.
+                    </p>
+                    <p>
+                        For Italy, the official Digital Green Certificate verification app is VerificaC19. 
+                        You can read more about it and download it from the 
+                        <a href="https://www.dgc.gov.it/web/app.html">
+                            <span>official government site</span> 
+                            <span><i class="fas fa-external-link-alt"></i></i></span>
+                        </a>
+                    </p>
+                </div>
+
+            </div>
         </div>
+    </div>
+    <div class="section">
     </div>
     <footer class="footer has-text-centered has-background-info-light">
         <div class="content">
