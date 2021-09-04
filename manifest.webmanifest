@@ -6,7 +6,7 @@
     "start_url": "/DCC-green-pass-decoder/",
     "display": "standalone",
     "theme_color": "#00D1B2",
-    "background_color": "#00D1B2",
+    "background_color": "#FFFFFF",
     "icons": [
         {
           "src": "assets/icons/icon-72x72.png",
