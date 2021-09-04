@@ -20,6 +20,8 @@ function resetUI() {
 
 	document.getElementById("dgc-json").innerText = "";
 	document.getElementById("error-bar").hidden = true;
+	document.getElementById("signature-mismatch-notification").hidden = true;
+	document.getElementById("authentic-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
 
 	document.getElementById("cert-type").innerText = "";
@@ -80,11 +82,33 @@ reader.addEventListener('load', async (e) => {
 		if (rawstring.substring(0,4) !== "HC1:") throw "missing header in decoded text"
 		console.log(rawstring)
 
-		let json = await dgcDecode(rawstring);
+		let decoded = await dgcDecode(rawstring);
+		let json = decoded.json;
+		
+		
+
+		// Signature Verification!
+
+		let isAuthentic = await dgcIsAuthentic(decoded.raw, decoded.kid);
+
+		switch(isAuthentic) {
+			case (null): // no keys available for validation
+				break; 
+			case (false):
+				document.getElementById("signature-mismatch-notification").hidden = false;
+				break;
+			case(true):
+				document.getElementById("authentic-notification").hidden = false;
+				break;
+			default:
+				break;
+		}
+
+		// Display the Certificate content
 		const text = JSON.stringify(json, null, 2)
 		document.querySelector("#dgc-json").textContent = text
-		
 		displayDecodedData(json);
+
 	}
 	catch(err) {
 		errorHandler(err,"This is not an EU Digital COVID Certificate")
@@ -210,20 +234,26 @@ function dgcDecode(greenpassStr) {
 	const decodedData = base45.decode(greenpassBody);
 
 	// Decompression (zlib)
-	const output = pako.inflate(decodedData);
+	const cwt = pako.inflate(decodedData);
+
+	// Now we have the COSE message
+	const results = cbor.decodeAllSync(cwt);
+	let [protected_header, unprotected_header, cbor_data, signature] = results[0].value;
+
+	// Extract the signature key identifier (KID) for signature validation
+	let kid = cbor.decode(protected_header).get(4)
+	if (kid) {
+		kid = kid.reduce ( (str, v) => str + String.fromCharCode(v), "") //uint8array -> bstr
+		kid = btoa(kid) //bstr -> base64
+	}
 
 	// Finally, we can decode the CBOR
-	const results = cbor.decodeAllSync(output);
-
-	[headers1, headers2, cbor_data, cose_signature] = results[0].value;
-
 	const greenpassJSON = cbor.decodeAllSync(cbor_data);
 
-	//console.log(greenpassJSON);
 
 	let out = greenpassJSON[0].get(-260).get(1);
-	//console.log(out);
-	return out;
+
+	return {raw: cwt, json: out, kid: kid};
 }
 
 
@@ -466,4 +496,56 @@ function dateFormat(dateStr) {
 
 	const date = new Date(dateStr);
 	return Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
+}
+
+
+
+
+//
+// SIGNATURE VERIFICATION
+//
+const x509 = require("@fidm/x509")
+const cose = require("cose-js")
+//const Certificate = x509.Certificate;
+const PublicKey = x509.PublicKey;
+
+async function dgcIsAuthentic(greenpassRawData, kid) {
+
+	let res = await fetch("assets/publickeys.json");
+	let keys = await res.json();
+	if (!keys) return null;
+	let eligible_keys = keys[kid];
+	
+
+	if (!eligible_keys) return false;
+
+	let verified = false;
+	for (let k of eligible_keys) {
+		const key = PublicKey.fromPEM(`-----BEGIN PUBLIC KEY-----\n${k}\n-----END PUBLIC KEY-----\n`);
+		
+		// Signature verification
+		const pk = key.keyRaw;
+		//const _keyB = pk.slice(0, 1);
+		const keyX = pk.slice(1, 1 + 32);
+		const keyY = pk.slice(33, 33 + 32);
+		try {
+			const verifier = { key: { x: keyX, y: keyY } };	
+			await cose.sign.verify(greenpassRawData, verifier);
+
+			verified = true;
+			break;
+		}
+		catch(err) {
+			// try the next key;
+			console.error(err.message);
+  			console.error(err.stack);
+		}
+
+	}
+
+	/* if (!verified) {
+		throw Error("Signature mismatch");
+	} */
+
+	return verified;
 }

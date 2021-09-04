@@ -28,7 +28,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <script src="bundle.js" defer></script>
 
-    <title>Digital Green Certificate decoder</title>
+    <title>Digital COVID Certificate decoder</title>
 
 </head>
 <body>
@@ -104,15 +104,15 @@
                     </div>
 
                     
-                    <div class="column is-two-thirds mt-5">
+                    <div class="column is-two-thirds">
                         <div id="dgc-code" hidden>
                             <span class="label is-size-5">Decoded content</span>
                             <pre><code id="dgc-json"></code></pre>
                         </div>
                         <div id="dgc-hr" hidden>
-                            <div class="notification is-danger is-light mb-6" id="error-bar" hidden>
+                            <div class="notification is-warning is-light mb-6" id="error-bar" hidden>
                                 <div class="mb-2">
-                                    <strong>❌ This is not an EU Digital COVID Certificate</strong>
+                                    <strong>⚠️ This is not an EU Digital COVID Certificate</strong>
                                 </div>
                                 <div class="container">
                                     <div class="content">
@@ -120,8 +120,28 @@
                                         <span id="error-text"></span>
                                     </div>
                                     <div class="text-breakable content">
-                                        <span>QR content: </span>
-                                        <span id="qr-decoded-content" class="text-breakable"></span>
+                                        <span>Decoded text: </span>
+                                        <span id="qr-decoded-content" class="text-breakable">none</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification is-success is-light mb-6" id="authentic-notification" hidden>
+                                <div class="mb-2">
+                                    <strong>✔️ Authentic Certificate</strong>
+                                </div>
+                                <div class="container">
+                                    <div class="content">
+                                        <span>The certificate signature is valid</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification is-danger is-light mb-6" id="signature-mismatch-notification" hidden>
+                                <div class="mb-2">
+                                    <strong>❌ This certificate is not valid</strong>
+                                </div>
+                                <div class="container">
+                                    <div class="content">
+                                        <span>This certificate may be counterfeit because it is not signed with a known authoritative key.</span>
                                     </div>
                                 </div>
                             </div>
@@ -319,8 +339,8 @@
             <div class="notification-body">
                 <div class="content">
                     <p>
-                        This is <u>not an official validation tool</u> but a mere viewer of what's inside the European Digital Covid Certificate QR code. 
-                        As it doesn't check for any signature, <strong><u>this app cannot detect if the certificate is legit or a counterfeit</u></strong>. If you need to check for authenticity, please use the official app provided by your country institutions.
+                        This is <u>not an official validation tool</u> but a simple viewer of what is inside the QR code of the European Digital Covid Certificate. 
+                        If you need to check the validity of a certificate, use the official app provided by the authorities of your country.
                     </p>
                     <p>
                         For Italy, the official Digital Green Certificate verification app is VerificaC19. 

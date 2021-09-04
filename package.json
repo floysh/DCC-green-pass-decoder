@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "A simple web app to read what's inside the Green Pass QR-code.",
   "dependencies": {
+    "@fidm/x509": "^1.2.1",
     "base45": "^3.0.0",
     "cbor": "^8.0.0",
+    "cose-js": "^0.6.0",
     "jsqr": "^1.4.0",
     "pako": "^2.0.4"
   },
@@ -14,7 +16,7 @@
     "watchify": "^4.0.0"
   },
   "scripts": {
-    "start": "watchify source.js -o bundle.js",
+    "start": "watchify src/source.js -o bundle.js",
     "build": "browserify src/source.js -o bundle.js && uglifyjs bundle.js --compress -o bundle.js"
   }
 }

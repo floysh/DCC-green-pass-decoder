@@ -26,6 +26,7 @@ const filesToCache = [
     'style.css',
     'bundle.js',
     'index.html',
+    "assets/publickeys.json",
     "assets/icons/icon-128x128.png",
     "assets/icons/icon-152x152.png",
     "assets/icons/icon-384x384.png",
@@ -52,16 +53,16 @@ self.addEventListener('install', event => {
 
 // Cache the valueset .json files
 self.addEventListener('fetch', event => {
-    console.log('Fetch event for ', event.request.url);
+    //console.log('Fetch event for ', event.request.url);
     event.respondWith(
         caches.match(event.request)
         .then(response => {
         if (response) {
-            console.log('Found ', event.request.url, ' in cache');
+            //console.log('Found ', event.request.url, ' in cache');
             return response;
         }
 
-        console.log('Network request for ', event.request.url);
+        //console.log('Network request for ', event.request.url);
         return fetch(event.request)
           .then(response => {
               return caches.open(staticCacheName).then(cache => {
