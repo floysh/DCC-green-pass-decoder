@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A simple web app to read what's inside the Green Pass QR-code.",
   "dependencies": {
+    "@babel/runtime": "^7.15.4",
     "@fidm/x509": "^1.2.1",
     "base45": "^3.0.0",
     "cbor": "^8.0.0",
@@ -12,13 +13,24 @@
     "qrious": "^4.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/plugin-transform-runtime": "^7.15.0",
+    "@babel/preset-env": "^7.15.6",
+    "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "tinyify": "^3.0.0",
     "watchify": "^4.0.0"
   },
   "scripts": {
-    "start": "watchify src/source.js -o bundle.js",
+    "start": "watchify src/source.js -o bundle.js -v --debug",
     "build": "browserify src/source.js -o bundle.js && uglifyjs bundle.js --compress -o bundle.js",
     "shell": "node --experimental-repl-await"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify"
+      ]
+    ]
   }
 }

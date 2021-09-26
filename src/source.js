@@ -1,7 +1,11 @@
-const jsqr = require('jsqr');
-const base45 = require('base45');
-const pako = require('pako');
-const cbor = require('cbor');
+import jsqr from 'jsqr';
+import * as base45 from 'base45';
+import * as zlib from 'pako';
+import * as cbor from 'cbor';
+import QRious from "qrious";
+
+import {decodeValue, decodeDGCValues} from './valuedecoder'
+import * as signature from './signature'
 
 console.log("😃✔️👍")
 
@@ -16,7 +20,7 @@ window.addEventListener("load", () => {
 
 function resetUI() {
 	const dgcform = document.getElementsByClassName("dgc input");
-	for (elem of dgcform) elem.value = null;
+	for (let elem of dgcform) elem.value = null;
 
 	document.getElementById("dgc-json").innerText = "";
 	document.getElementById("error-bar").hidden = true;
@@ -48,10 +52,7 @@ reader.addEventListener('load', async (e) => {
 
    // contents of the file
 	let file = e.target.result;
-
 	if(file.substr(0,10) != "data:image") return errorHandler("not an image", "Cannot load this file")
-
-	document.querySelector("#dgc-json").textContent = file;
 
 	// create an image structure to get the image size (width, height)
 	async function createImage(file) {
@@ -82,7 +83,7 @@ reader.addEventListener('load', async (e) => {
 		let rawstring = await decodeQR(imgdata);
 		document.getElementById("qr-decoded-content").innerText = rawstring;
 		
-		if (rawstring.substring(0,4) !== "HC1:") throw "missing header in decoded text"
+		if (rawstring.substring(0,4) !== "HC1:") throw Error("missing header in decoded text")
 		console.log(rawstring)
 
 		let decoded = await dgcDecode(rawstring);
@@ -93,7 +94,7 @@ reader.addEventListener('load', async (e) => {
 
 
 		// Signature Verification!
-		let isAuthentic = await dgcIsAuthentic(decoded.raw, decoded.kid);
+		let isAuthentic = await signature.verify(decoded.raw, decoded.kid);
 		switch(isAuthentic) {
 			case (null): // no keys available for validation
 				break; 
@@ -107,17 +108,18 @@ reader.addEventListener('load', async (e) => {
 				break;
 		}
 
-		
+
 		// Display the Certificate content
 		const text = JSON.stringify(json, null, 2)
 		document.querySelector("#dgc-json").textContent = text
-		displayDecodedData(json);
-
+		const hrDGC = decodeDGCValues(json)
+		displayDecodedData(hrDGC);
 
 	}
 	catch(err) {
 		errorHandler(err,"This is not an EU Digital COVID Certificate")
 	}
+
 });
 
 function errorHandler(err,err_header) {
@@ -130,6 +132,10 @@ function errorHandler(err,err_header) {
 }
 
 
+document.querySelector("#file-selector").addEventListener('change', event => {
+	// Repeat computation when user re-selects the same file
+
+});
 document.querySelector("#file-selector").addEventListener('change', event => {
 	// Load the image as a dataurl to get the correct image size.
 	// The ImageData constructor requires width and height
@@ -160,7 +166,6 @@ dropArea.addEventListener('drop', (event) => {
   event.stopPropagation();
   event.preventDefault();
   const fileList = event.dataTransfer.files;
-  //console.log(fileList);
   reader.readAsDataURL(fileList[0]);
 });
 
@@ -173,12 +178,6 @@ dropArea.addEventListener('drop', (event) => {
 
 // Convert a Data URL image into an ImageData structure via the Canvas API
 // See https://stackoverflow.com/questions/51869520/image-to-uint8array-in-javascript
-function imageDataUrlToImageData(image) {
-	const canvas = document.createElement("canvas");
-	const context = canvas.getContext("2d");
-	return imageDataUrlToImageData(image, context);
-			  }
-
 async function imageDataUrlToImageData(image, context) {
 	return new Promise((resolve, reject) => {
 		context.width = image.width;
@@ -192,8 +191,8 @@ async function imageDataUrlToImageData(image, context) {
 			}
 
 		resolve(context.getImageData(0,0,context.width, context.height));
-});
-	}
+	});
+}
 
 
 //
@@ -206,7 +205,7 @@ async function decodeQR(greenpassImageData) {
 	if (!('BarcodeDetector' in window)) {		
 		const greenpass = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
 		
-		if(greenpass === null) throw "no QR code detected"
+		if(greenpass === null) throw Error("no QR code detected")
 
 		return greenpass.data;
 	} 
@@ -215,7 +214,7 @@ async function decodeQR(greenpassImageData) {
 		
 		const barcodes = await barcodeDetector.detect(greenpassImageData);
 		
-		if(barcodes.length < 1) throw "no QR code detected"
+		if(barcodes.length < 1) throw Error("no QR code detected")
 		console.log(barcodes[0])
 
 		return ""+barcodes[0].rawValue;
@@ -239,11 +238,11 @@ function dgcDecode(greenpassStr) {
 	const decodedData = base45.decode(greenpassBody);
 
 	// Decompression (zlib)
-	const cwt = pako.inflate(decodedData);
+	const cwt = zlib.inflate(decodedData);
 
 	// Now we have the COSE message
 	const results = cbor.decodeAllSync(cwt);
-	let [protected_header, unprotected_header, cbor_data, signature] = results[0].value;
+	const [protected_header, unprotected_header, cbor_data, signature] = results[0].value;
 
 	// Extract the signature key identifier (KID) for signature validation
 	let kid = cbor.decode(protected_header).get(4)
@@ -253,152 +252,20 @@ function dgcDecode(greenpassStr) {
 	}
 
 	// Finally, we can decode the CBOR
-	const greenpassJSON = cbor.decodeAllSync(cbor_data);
-
-
-	let out = greenpassJSON[0].get(-260).get(1);
+	const hcert = cbor.decodeAllSync(cbor_data);
+	const out = hcert[0].get(-260).get(1);
 
 	return {raw: cwt, json: out, kid: kid};
 }
 
 
-
-
 //
-// Replace the DGC field values with ruman readable strings 
-// from the authoritative value sets
+// Fills the UI with human readable values 
+// of the dgc fields
 //
-const valueSets = {
-	"test-manf" : {
-		abbr: "ma",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-manf.json",
-		json: null
-	},
-	"country-codes": {
-		abbr: "co",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/country-2-codes.json",
-		json: null
-	},
-	"disease-agent-targeted": {
-		abbr: "tg",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/disease-agent-targeted.json",
-		json: null
-	},
-	"test-result": {
-		abbr: "tr",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-result.json",
-		json: null
-	},
-	"test-type": {
-		abbr: "tt",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/test-type.json",
-		json: null
-	},
-	"vaccine-mah-manf": {
-		abbr: "ma",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-mah-manf.json",
-		json: null
-	},
-	"vaccine-medicinal-product": {
-		abbr: "mp",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-medicinal-product.json",
-		json: null
-	},
-	"vaccine-prophilaxis": {
-		abbr: "vp",
-		url: "https://raw.githubusercontent.com/ehn-dcc-development/ehn-dcc-valuesets/release/2.0.0/vaccine-prophylaxis.json",
-		json: null
-	}
-}
-
-let valueSetsLoaded = false;
-
-function loadValueSets() {
-	// Load the valuesets
-	const promises = []
-	Object.keys(valueSets).forEach( k => {
-		const elem = valueSets[k];
-		promises.push(
-			fetch(elem.url)
-			.then(res => res.json())
-			.then(json => elem.json = json)
-		)
-	})
-
-	Promise.all(promises).then(() => {
-		valueSetsLoaded = true;
-	})
-}
-
-window.addEventListener("load", loadValueSets());
-
-
-function decodeValue(valueType, id) {
-	const valueSet = valueSets[valueType].json;
-	if (!valueSet) {
-		console.warn("ValueSets not loaded for: "+id)
-		return id;
-	}
-	else {
-		return (valueSet.valueSetValues[id]) ? valueSet.valueSetValues[id].display : id;
-	}
-}
-
 function displayDecodedData(greenpassJSON) {
 	// see 
 	// https://github.com/ehn-dcc-development/ehn-dcc-schema
-
-	const schema = {
-		nam : {
-			fnt : {field_id: "fnt", decoder: null},
-			fn : {field_id: "fn", decoder: null},
-			gnt : {field_id: "gnt", decoder: null},
-			gn : {field_id: "gn", decoder: null},
-			},
-		ver : {field_id: "ver", decoder: null},
-		dob : {field_id: "dob", decoder: null}
-	}
-
-	const vaccineSchema = [
-		{
-			dn : {field_id: "v-dn-sd", decoder: () => {return `${greenpassJSON.v[0].dn} / ${greenpassJSON.v[0].sd}`}},
-			ma : {field_id: "v-ma", decoder: "vaccine-mah-manf"},
-			vp : {field_id: "v-vp", decoder: "vaccine-prophilaxis"},
-			dt : {field_id: "v-dt", decoder: null},
-			co : {field_id: "v-co", decoder: "country-codes"},
-			ci : {field_id: "v-ci", decoder: null},
-			mp : {field_id: "v-mp", decoder: "vaccine-medicinal-product"},
-			is : {field_id: "v-is", decoder: null},
-			sd : {field_id: "v-dn-sd", decoder: () => {return `${greenpassJSON.v[0].dn} / ${greenpassJSON.v[0].sd}`}},
-			tg : {field_id: "v-tg", decoder: "disease-agent-targeted"},
-		}
-	];
-	const recoverySchema = [
-		{
-			du : {field_id: "r-du", decoder: null},
-			co : {field_id: "r-co", decoder: "country-codes"},
-			ci : {field_id: "r-ci", decoder: null},
-			is : {field_id: "r-is", decoder: null},
-			tg : {field_id: "r-tg", decoder: "disease-agent-targeted"},
-			df : {field_id: "r-df", decoder: null},
-			fr : {field_id: "r-fr", decoder: null}
-		}
-	];
-	const testSchema = [
-		{
-			sc : {field_id: "t-sc", decoder: dateFormat},
-			ma : {field_id: "t-ma", decoder: "test-manf"},
-			dr : {field_id: "t-dr", decoder: dateFormat},
-			tt : {field_id: "t-tt", decoder: "test-type"},
-			nm : {field_id: "t-nm", decoder: null},
-			co : {field_id: "t-co", decoder: "country-codes"},
-			tc : {field_id: "t-tc", decoder: null},
-			ci : {field_id: "t-ci", decoder: null},
-			is : {field_id: "t-is", decoder: null},
-			tg : {field_id: "t-tg", decoder: "disease-agent-targeted"},
-			tr : {field_id: "t-tr", decoder: "test-result"},
-		}
-	];
 
 	const vgroup = document.getElementById("vaccination-group");
 	const rgroup = document.getElementById("recovery-group");
@@ -406,97 +273,53 @@ function displayDecodedData(greenpassJSON) {
 
 	const cert_type = document.getElementById("cert-type")
 
-	if (greenpassJSON["v"]) {
-		schema.v = vaccineSchema;
+
+	// Enable the necessary UI sections
+
+	let type = null;
+	if ("v" in greenpassJSON) {
+		type = "v"
 		vgroup.hidden = false;
 		cert_type.innerText = "Vaccination"
 	}
-	else if (greenpassJSON["r"]) {
-		schema.r = recoverySchema;
+	else if ("r" in greenpassJSON) {
+		type = "r"
 		rgroup.hidden = false;
 		cert_type.innerText = "Recovery"
 	}
-	else if (greenpassJSON["t"]) {
-		schema.t = testSchema;
+	else if ("t" in greenpassJSON) {
+		type = "t"
 		tgroup.hidden = false;
 		cert_type.innerText = "Test"
 	}
-	else throw "certificate type not recognized";
-
-	document.getElementById("ver").innerText = greenpassJSON.ver;
+	else throw Error("invalid certificate type");
 
 	document.getElementById("load-tip").hidden = true;
 	document.getElementById("common-group").hidden = false;
 	
-	
-	// Decode the values before displaying them
-	// https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_dt-specifications_en.pdf
 
-	for (p of Object.keys(greenpassJSON)) {
-		let group = null;
-		let schemagroup = null;
-		switch (p) {
-			case("v"):
-			case("r"):
-			case("t"):
-				group = greenpassJSON[p][0]
-				schemagroup = schema[p][0]
-				//console.log(greenpassJSON[p][0])
+	// Fill the UI
 
-				for (prop of Object.keys(group)) {
-					//console.log(prop)
-					let textbox = document.getElementById(schemagroup[prop].field_id)
-					const decoder = schemagroup[prop].decoder;
-					
-					if (decoder) {
-						if (typeof decoder === "function") {
-							textbox.value = decoder(group[prop]);
-						}
-						else if (typeof decoder === "string") {
-							textbox.value = decodeValue(decoder, group[prop]);
-						}
-					}
-					else {
-						textbox.value = group[prop];
-					}
-				}
-				break;
+	// Display the top-level properties
+	// (dob, ver)
+	document.getElementById("dob").value = greenpassJSON.dob.value
+	document.getElementById("ver").value = greenpassJSON.ver.value
 
-			case("nam"):
-				group = greenpassJSON[p]
-				schemagroup = schema[p]
+	// Display the person's name group properties
+	for (let p of Object.keys(greenpassJSON.nam)) {
+		const textbox = document.getElementById(p);
+		textbox.value = greenpassJSON.nam[p].value
+	}
 
-				for (prop of Object.keys(group)) {
-					let textbox = document.getElementById(schemagroup[prop].field_id)
-					const decoder = schemagroup[prop].decoder;
-					
-					if (decoder) {
-						if (typeof decoder === "function") {
-							textbox.value = decoder(group[prop]);
-						}
-						else if (typeof decoder === "string") {
-							textbox.value = decodeValue(decoder, group[prop]);
-						}
-					}
-					else {
-						textbox.value = group[prop];
-					}
-				}
-				break;
-
-			case "dob":
-			case "ver":
-				document.getElementById(schema[p].field_id).value = greenpassJSON[p]
-
-			default: break;
-		}
+	// Display the type specific group properties
+	// v | r | t
+	const type_group = greenpassJSON[type][0]
+	for (let p of Object.keys(type_group)) {
+		const textbox = document.getElementById(type+"-"+p);
+		textbox.value = type_group[p].value
 	}
 
 }
-
-
-
-
 
 
 function dateFormat(dateStr) {
@@ -507,15 +330,13 @@ function dateFormat(dateStr) {
 }
 
 
-
-
-
-const QRious = require("qrious");
-
+// Redraw QR 
 function beautifyQR(str, canvas) {
 	const context = canvas.getContext("2d");
-	context.width = 300;
-	context.height = 300;
+	context.width = 600;
+	context.height = context.widtheight;
+	canvas.width = context.width;
+	canvas.height = context.width;
 
 	let qr = new QRious({
 		element: canvas
@@ -530,56 +351,4 @@ function beautifyQR(str, canvas) {
 		value: str
 	});
 
-}
-
-
-
-
-//
-// SIGNATURE VERIFICATION
-//
-const x509 = require("@fidm/x509")
-const cose = require("cose-js")
-//const Certificate = x509.Certificate;
-const PublicKey = x509.PublicKey;
-
-async function dgcIsAuthentic(greenpassRawData, kid) {
-
-	let res = await fetch("assets/it_dgc_public_keys.json");
-	let keys = await res.json();
-	if (!keys) return null;
-	let eligible_keys = keys[kid];
-	
-
-	if (!eligible_keys) return false;
-
-	let verified = false;
-	for (let k of eligible_keys) {
-		const key = PublicKey.fromPEM(`-----BEGIN PUBLIC KEY-----\n${k}\n-----END PUBLIC KEY-----\n`);
-		
-		// Signature verification
-		const pk = key.keyRaw;
-		//const _keyB = pk.slice(0, 1);
-		const keyX = pk.slice(1, 1 + 32);
-		const keyY = pk.slice(33, 33 + 32);
-		try {
-			const verifier = { key: { x: keyX, y: keyY } };	
-			await cose.sign.verify(greenpassRawData, verifier);
-
-			verified = true;
-			break;
-		}
-		catch(err) {
-			// try the next key;
-			console.error(err.message);
-  			console.error(err.stack);
-		}
-
-	}
-
-	/* if (!verified) {
-		throw Error("Signature mismatch");
-	} */
-
-	return verified;
 }
