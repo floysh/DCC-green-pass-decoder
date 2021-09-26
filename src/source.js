@@ -25,6 +25,7 @@ function resetUI() {
 	document.getElementById("qr-decoded-content").innerText = "";
 
 	document.getElementById("cert-type").innerText = "";
+	document.getElementById("common-group").hidden = true;
 	document.getElementById("vaccination-group").hidden = true;
 	document.getElementById("recovery-group").hidden = true;
 	document.getElementById("test-group").hidden = true;
@@ -73,6 +74,8 @@ reader.addEventListener('load', async (e) => {
 	
 	const context = canvas.getContext('2d')
 	const imgdata = await imageDataUrlToImageData(img, context)
+
+	document.getElementById("results-col").classList.remove("is-hidden")
 	
 	// Decode the DCC Image to a JSON Schema
 	try {
@@ -84,13 +87,13 @@ reader.addEventListener('load', async (e) => {
 
 		let decoded = await dgcDecode(rawstring);
 		let json = decoded.json;
-		
-		
+
+
+		beautifyQR(rawstring, canvas)
+
 
 		// Signature Verification!
-
 		let isAuthentic = await dgcIsAuthentic(decoded.raw, decoded.kid);
-
 		switch(isAuthentic) {
 			case (null): // no keys available for validation
 				break; 
@@ -104,10 +107,12 @@ reader.addEventListener('load', async (e) => {
 				break;
 		}
 
+		
 		// Display the Certificate content
 		const text = JSON.stringify(json, null, 2)
 		document.querySelector("#dgc-json").textContent = text
 		displayDecodedData(json);
+
 
 	}
 	catch(err) {
@@ -419,6 +424,9 @@ function displayDecodedData(greenpassJSON) {
 	else throw "certificate type not recognized";
 
 	document.getElementById("ver").innerText = greenpassJSON.ver;
+
+	document.getElementById("load-tip").hidden = true;
+	document.getElementById("common-group").hidden = false;
 	
 	
 	// Decode the values before displaying them
@@ -496,6 +504,32 @@ function dateFormat(dateStr) {
 
 	const date = new Date(dateStr);
 	return Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
+}
+
+
+
+
+
+const QRious = require("qrious");
+
+function beautifyQR(str, canvas) {
+	const context = canvas.getContext("2d");
+	context.width = 300;
+	context.height = 300;
+
+	let qr = new QRious({
+		element: canvas
+	});
+	qr.set({
+		background: 'white',
+		backgroundAlpha: 1.0,
+		foreground: 'black',
+		foregroundAlpha: 1.0,
+		level: 'H',
+		size: context.width,
+		value: str
+	});
+
 }
 
 

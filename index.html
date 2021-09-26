@@ -106,12 +106,13 @@
                     </div>
 
                     
-                    <div class="column is-two-thirds">
+                    <div class="column is-two-thirds" id="results-col">
                         <div id="dgc-code" hidden>
-                            <span class="label is-size-5">Decoded content</span>
+                            <span class="label is-size-4">Decoded content</span>
                             <pre><code id="dgc-json"></code></pre>
                         </div>
                         <div id="dgc-hr" hidden>
+                            <span class="label is-size-4">Certificate content</span>
                             <div class="notification is-warning is-light mb-6" id="error-bar" hidden>
                                 <div class="mb-2">
                                     <strong>⚠️ This is not an EU Digital COVID Certificate</strong>
@@ -127,65 +128,80 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="notification is-success is-light mb-6" id="authentic-notification" hidden>
+
+                            <div class="mt-6 mb-6" id="load-tip">
+                                <div class="section has-text-centered content is-vcentered">
+                                    <p class="is-size-2 mb-3">🔍</p>
+                                    <p>
+                                        Your health certificate information will be displayed here
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="notification is-success is-light mb-5" id="authentic-notification" hidden>
                                 <div class="mb-2">
-                                    <strong>✔️ Authentic Certificate</strong>
+                                    <strong>✔️ Signature verified</strong>
                                 </div>
                                 <div class="container">
                                     <div class="content">
-                                        <span>The certificate signature is valid</span>
+                                        <span>This certificate has been signed with an authorized private key</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="notification is-danger is-light mb-6" id="signature-mismatch-notification" hidden>
+                            <div class="notification is-danger is-light mb-5" id="signature-mismatch-notification" hidden>
                                 <div class="mb-2">
-                                    <strong>❌ This certificate is not valid</strong>
+                                    <strong>❌ Signature mismatch</strong>
                                 </div>
                                 <div class="container">
                                     <div class="content">
-                                        <span>This certificate may be counterfeit because it is not signed with a known authoritative key.</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-5">
-                                <div class="field">
-                                    <div>
-                                        <span class=" is-size-5 mr-2"><b>Certificate Type: </b></span>
-                                        <b><span id="cert-type" class="has-text-primary is-size-5">[unknown]</span></b>
-                                    </div>
-                                    <div class="mt-3">
-                                        <span class=" is-size-6 mr-2">Schema version: </span>
-                                        <span id="ver" class="is-size-6"></span>
+                                        <span>This certificate may be counterfeit because its signature doesn't match any known authoritative key</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="columns">
-                                <div class="column">
+                            <div id="common-group" hidden>
+                                <div class="mb-5" id="cert-info-group">
                                     <div class="field">
-                                        <span class="label">Surame(s)</span>
-                                        <input type="text" id="fn" class="dgc input" placeholder="e.g Di Caprio" readonly>
-                                    </div>
-                                    <div class="field">
-                                        <span class="label">Name(s)</span>
-                                        <input type="text" id="gn" class="dgc input" placeholder="e.g Marilù Teresa" readonly>
+                                        <div>
+                                            <span class=" is-size-6 mr-2"><b>Certificate Type: </b></span>
+                                            <b><span id="cert-type" class="has-text-primary is-size-6">[unknown]</span></b>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class=" is-size-6 mr-2">Schema version: </span>
+                                            <span id="ver" class="is-size-6"></span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="column">
-                                    <div class="field">
-                                        <span class="label">Standardized surame(s)</span>
-                                        <input type="text" id="fnt" class="dgc input" placeholder="e.g DI>CAPRIO" readonly>
+                                <div id="person-group">
+                                    <div class="columns">
+                                        <div class="column">
+                                            <div class="field">
+                                                <span class="label">Surame(s)</span>
+                                                <input type="text" id="fn" class="dgc input" placeholder="e.g Rossi" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Name(s)</span>
+                                                <input type="text" id="gn" class="dgc input" placeholder="e.g Marco Aurelio" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="column">
+                                            <div class="field">
+                                                <span class="label">Standardized surame(s)</span>
+                                                <input type="text" id="fnt" class="dgc input" placeholder="e.g ROSSI" readonly>
+                                            </div>
+                                            <div class="field">
+                                                <span class="label">Standardized name(s)</span>
+                                                <input type="text" id="gnt" class="dgc input" placeholder="e.g MARCO>AURELIO" readonly>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="field">
-                                        <span class="label">Standardized name(s)</span>
-                                        <input type="text" id="gnt" class="dgc input" placeholder="e.g MARILU>TERESA" readonly>
+                                        <span class="label">Date of birth</span>
+                                        <input type="text" id="dob" class="dgc input" placeholder="e.g 1987-06-12" readonly>
                                     </div>
                                 </div>
                             </div>
-                            <div class="field">
-                                <span class="label">Date of birth</span>
-                                <input type="text" id="dob" class="dgc input" placeholder="e.g 1987-06-12" readonly>
-                            </div>
+
 
                             <div class="mt-6" id="vaccination-group" hidden>
                                 <div class="field">
@@ -371,9 +387,9 @@
         </div>
         <div class="content">
             <span>
-                This project is open source |  
+                This project is open source &nbsp; | &nbsp;
             </span>
-            <span class="ml-2 mr-1">
+            <span class="mr-1">
                 <i class="fab fa-github"></i>
             </span>
             <span>
