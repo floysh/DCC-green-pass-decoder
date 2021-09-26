@@ -511,7 +511,7 @@ const PublicKey = x509.PublicKey;
 
 async function dgcIsAuthentic(greenpassRawData, kid) {
 
-	let res = await fetch("assets/publickeys.json");
+	let res = await fetch("assets/it_dgc_public_keys.json");
 	let keys = await res.json();
 	if (!keys) return null;
 	let eligible_keys = keys[kid];
