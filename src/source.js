@@ -2,7 +2,7 @@ import jsqr from 'jsqr';
 import * as base45 from 'base45';
 import * as zlib from 'pako';
 import * as cbor from 'cbor';
-import QRious from "qrious";
+import QRCode from "qrcode";
 
 import {decodeValue, decodeDGCValues} from './valuedecoder'
 import * as signature from './signature'
@@ -28,6 +28,7 @@ function resetUI() {
 	document.getElementById("authentic-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
 
+	document.getElementById("load-tip").hidden = false;
 	document.getElementById("cert-type").innerText = "";
 	document.getElementById("common-group").hidden = true;
 	document.getElementById("vaccination-group").hidden = true;
@@ -52,7 +53,7 @@ reader.addEventListener('load', async (e) => {
 
    // contents of the file
 	let file = e.target.result;
-	if(file.substr(0,10) != "data:image") return errorHandler("not an image", "Cannot load this file")
+	if(file.substr(0,10) != "data:image") return errorHandler(new Error("file is not an image"), "Cannot load this file")
 
 	// create an image structure to get the image size (width, height)
 	async function createImage(file) {
@@ -85,7 +86,7 @@ reader.addEventListener('load', async (e) => {
 		
 		if (rawstring.substring(0,4) !== "HC1:") throw Error("missing header in decoded text")
 		console.log(rawstring)
-
+		
 		let decoded = await dgcDecode(rawstring);
 		let json = decoded.json;
 
@@ -125,7 +126,7 @@ reader.addEventListener('load', async (e) => {
 function errorHandler(err,err_header) {
 	console.warn("NOT A DGC: "+err)
 	// Show error message
-	const errtext = err_header+"\nError: "+err;
+	const errtext = err_header+"\n"+err;
 	document.querySelector("#dgc-json").textContent = errtext;
 	document.querySelector("#error-text").textContent = err;
 	document.querySelector("#error-bar").hidden = false;
@@ -303,7 +304,7 @@ function displayDecodedData(greenpassJSON) {
 	// Display the top-level properties
 	// (dob, ver)
 	document.getElementById("dob").value = greenpassJSON.dob.value
-	document.getElementById("ver").value = greenpassJSON.ver.value
+	document.getElementById("ver").innerText = greenpassJSON.ver.value
 
 	// Display the person's name group properties
 	for (let p of Object.keys(greenpassJSON.nam)) {
@@ -332,23 +333,30 @@ function dateFormat(dateStr) {
 
 // Redraw QR 
 function beautifyQR(str, canvas) {
-	const context = canvas.getContext("2d");
-	context.width = 600;
-	context.height = context.widtheight;
-	canvas.width = context.width;
-	canvas.height = context.width;
+	const SIZE = 600;
+	canvas.width = SIZE; 
+	canvas.height = SIZE;
 
-	let qr = new QRious({
-		element: canvas
-	});
-	qr.set({
-		background: 'white',
-		backgroundAlpha: 1.0,
-		foreground: 'black',
-		foregroundAlpha: 1.0,
-		level: 'H',
-		size: context.width,
-		value: str
-	});
+	// see https://github.com/soldair/node-qrcode
+
+	const config = {
+		errorCorrectionLevel: 'H',
+		type: "image/png"
+	}
+
+	QRCode.toDataURL(str, config)
+		.then(qr => {
+			const img = new Image();
+			img.src = qr;
+			img.onload = () => {
+				canvas.width = img.width;
+				canvas.height = img.height;
+				const context = canvas.getContext("2d");
+				context.drawImage(img, 0, 0)
+			}
+		})
+		.catch(err => {
+			console.error("qr-code beautify",err)
+		})
 
 }

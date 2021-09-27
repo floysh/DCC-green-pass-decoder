@@ -1,6 +1,6 @@
 // Change this number to force a new service worker install
 // and app update
-const SERVICE_WORKER_VERSION = 102
+const SERVICE_WORKER_VERSION = 103
 
 // Delete the old app cached files
 self.addEventListener('activate', function (event) {

@@ -10,7 +10,7 @@
     "cose-js": "^0.6.0",
     "jsqr": "^1.4.0",
     "pako": "^2.0.4",
-    "qrious": "^4.0.2"
+    "qrcode": "^1.4.4"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
@@ -28,9 +28,7 @@
   },
   "browserify": {
     "transform": [
-      [
-        "babelify"
-      ]
+      ["babelify"]
     ]
   }
 }
