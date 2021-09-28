@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+<html>
 <head>
     <meta charset="utf-8">
     <link rel="manifest" href="manifest.webmanifest">
@@ -7,7 +7,7 @@
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="DCC Decoder">
+    <meta name="application-name" content="Digital COVID Certificate Decoder">
     <meta name="apple-mobile-web-app-title" content="DCC Decoder">
     <meta name="theme-color" content="#00D1B2">
     <meta name="msapplication-navbutton-color" content="#00D1B2">
@@ -23,8 +23,6 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
     <link rel="stylesheet" href="style.css">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -53,19 +51,37 @@
             <div class="container pt-5">
                 <div class="columns is-variable is-6">
                     <div class="column">
-                        <div class="box">
+                        <span class="label is-size-4">Preview</span>
+                        <div class="box mb-6">
                             <div class="container">
-                                <div class="content has-text-centered">
-                                    <div class="is-size-1">
-                                        <i class="fas fa-qrcode"></i>
+                                <div class="block has-text-centered is-flex is-justify-content-center">
+                                    <div id="drag-drop-text">
+                                        <div class="is-size-1">
+                                            <i class="fas fa-qrcode"></i>
+                                        </div>
+                                        <div>
+                                            <p>
+                                                Drag & Drop a QR code on this box  
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p>
-                                        Drag & Drop a QR code on this box  
-                                    </p>
+                                </div>
+
+                                <div class="block canvas-wrapper is-hidden">
+                                    <canvas id="qr-canvas"  height=300 width=300>
+                                        This browser doesn't support HTML5 Canvas. 
+                                        This app might not work properly without the canvas API. 
+                                        Please switch to a supported browser
+                                    </canvas>
+                                </div>
+                                
+                                <div class="content has-text-centered mt-3">
                                     <div class="content">
-                                        <div class="container is-flex is-justify-content-center is-align-self-center is-align-items-center">
-                                            <span>or</span>
-                                            <span class="mr-2 ml-2"> </span>
+                                        <div class="container is-flex is-justify-content-center is-align-items-center">
+                                            <div>
+                                                <span>or</span>
+                                                <span class="mr-2 ml-2"> </span>
+                                            </div>
                                             <span>
                                                 <div class="file">
                                                 <label class="file-label">
@@ -84,26 +100,32 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="canvas-wrapper">
-                                    <canvas id="qr-canvas"  height=300 width=300>
-                                        This browser doesn't support HTML5 Canvas. 
-                                        This app might not work properly without the canvas API. 
-                                        Please switch to a supported browser
-                                    </canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="container block mb-5">
+                            <span class="label is-size-4">Options</span>
+                            <div class="container">
+                                <div class="box">
+                                    <div class="container-fluid">
+                                        <div class="columns is-mobile">
+                                            <div class="column">
+                                                <span class="has-text-weight-semibold pr-3">
+                                                    <label for="dgcHumanReadableToggle" class="mr-2">Human Readable</label>
+                                                </span>
+                                            </div>
+                                            <div class="column is-narrow has-text-right">
+                                                <span class="field">
+                                                    <input id="dgcHumanReadableToggle" type="checkbox" class="switch is-rounded" checked>
+                                                    <label for="dgcHumanReadableToggle"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="container-fluid has-text-right mt-5">
-                            <span class="pr-3">
-                                <label for="dgcHumanReadable" class="mr-2">Human Readable</label>
-                            </span>
-                            <span class="field pr-3">
-                                <input id="dgcHumanReadable" type="checkbox" class="switch is-rounded" checked>
-                                <label for="dgcHumanReadable"></label>
-                            </span>
-                        </div>
-                    </div>
+                </div>
 
                     
                     <div class="column is-two-thirds" id="results-col">
@@ -129,16 +151,26 @@
                                 </div>
                             </div>
 
-                            <div class="mt-6 mb-6" id="load-tip">
+                            <div id="signature-progress" class="block is-flex is-align-items-center is-hidden">
+                                <span class="mr-2">
+                                    <div class="button is-loading is-white" style="background: transparent;"></div>
+                                </span>
+                                <span>
+                                    <strong id="signature-progress-text">Verifying signature</strong>
+                                </span>
+                            </div>
+
+                            <div id="load-tip" class="mt-6 mb-6">
                                 <div class="section has-text-centered content is-vcentered">
-                                    <p class="is-size-2 mb-3">🔍</p>
+                                    <p class="is-size-2 mb-5">🔍</p>
                                     <p>
                                         Your health certificate information will be displayed here
                                     </p>
                                 </div>
                             </div>
                             
-                            <div class="notification is-success is-light mb-5" id="authentic-notification" hidden>
+
+                            <div id="authentic-notification" class="notification is-success is-light mb-5" hidden>
                                 <div class="mb-2">
                                     <strong>✔️ Signature verified</strong>
                                 </div>
@@ -148,7 +180,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="notification is-danger is-light mb-5" id="signature-mismatch-notification" hidden>
+                            <div id="signature-mismatch-notification" class="notification is-danger is-light mb-5" hidden>
                                 <div class="mb-2">
                                     <strong>❌ Signature mismatch</strong>
                                 </div>
@@ -359,9 +391,6 @@
                     </div>
                 </div>
             </div>
-
-        </div>
-
     </div>
     <div class="section">
         <div class="container">
@@ -395,7 +424,7 @@
     <div class="section">
         
     </div>
-    <footer class="footer has-text-centered has-background-info-light">
+        <footer class="footer has-text-centered has-background-info-light is-hidden-touch">
         <div class="content">
             <div class="title has-text-1">
                 🍕
@@ -412,7 +441,7 @@
                 <i class="fab fa-github"></i>
             </span>
             <span>
-                <a href="https://github.com/floysh/DCC-green-pass-decoder">Github Repo</a>
+                <a href="https://github.com/floysh/DCC-green-pass-decoder">Github</a>
             </span>
         </div>
     </footer>
@@ -428,3 +457,19 @@
         }
     </script>
 </body>
+    <!-- <nav class="navbar is-spaced is-fixed-bottom has-text-centered has-shadow">
+        <div class="container is-fluid p-3">
+            <div class="navbar-item">
+                <div class="video-container">
+                    <video id="camera-stream"></video>
+                </div>
+                <div class="button is-primary" id="start-scan" style="font-size: larger;">
+                    <span class="icon">
+                        <i class="fas fa-qrcode"></i>
+                    </span>
+                    <span>Scan with the device camera</span>
+                </div>
+            </div>
+        </div>
+    </nav> -->
+</html>
