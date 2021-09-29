@@ -10,6 +10,7 @@ export function reset() {
 	document.getElementById("signature-mismatch-notification").hidden = true;
 	document.getElementById("authentic-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
+	getQRCanvas().height += 0; //clean preview 
 
 	document.getElementById("cert-type").innerText = "";
 	document.getElementById("common-group").hidden = true;
@@ -41,7 +42,7 @@ export function hideQRCanvas() {
 // TOGGLE
 
 document.querySelector("#dgcHumanReadableToggle").addEventListener("click", event => {
-    UI.toggleDecodedHCertView(event.target.checked)
+    toggleDecodedHCertView(event.target.checked)
 });
 
 export function toggleDecodedHCertView(checked) {
@@ -66,6 +67,10 @@ export function showErrorMessage(err,err_header) {
 	document.querySelector("#dgc-json").textContent = errtext;
 	document.querySelector("#error-text").textContent = err;
 	document.querySelector("#error-bar").hidden = false;
+}
+
+export function showDecodedText(text) {
+	document.querySelector("#qr-decoded-content").innerText = text
 }
 
 
@@ -169,3 +174,9 @@ export function displaySignatureResult(isAuthentic) {
             break;
     }
 }
+
+
+
+export const scannerVideo = document.getElementById("camera-stream")
+
+export const scanner = document.getElementById("qr-scanner")

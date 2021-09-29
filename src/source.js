@@ -3,6 +3,7 @@ import * as base45 from 'base45';
 import * as zlib from 'pako';
 import * as cbor from 'cbor';
 import QRCode from "qrcode";
+import QrScanner from "qr-scanner";
 
 import {decodeValue, decodeDGCValues} from './valuedecoder'
 import * as signature from './signature'
@@ -57,66 +58,79 @@ reader.addEventListener('error', () => {
 reader.addEventListener('load', async (e) => {
 	UI.reset();
 
-   // contents of the file
+    // Read the file content
 	let file = e.target.result;
-	if (file.substr(0,10) != "data:image") return UI.showErrorMessage(new Error("file is not an image"), "Cannot load this file")
-
-	// create an image structure to get the image size (width, height)
-	async function createImage(file) {
-		return new Promise( (resolve, reject) => {
-			if (!file) reject();
-			let img = new Image()
-			img.src = file;
-			resolve(img) ;
-		})
-	}
+	if (file.substr(0,10) != "data:image") return UI.showErrorMessage(Error("file is not an image"), "Cannot load this file")
 	
-	const img = await createImage(file);
-	
-	// Now we use a canvas to convert the dataurl image into an ImageData structure
-	// This is needed to decode the QR code with jsQR 
-	
-	const canvas = UI.getQRCanvas()
-	canvas.width = img.width;
-	canvas.height = img.height;
-	
-	const context = canvas.getContext('2d')
-	const imgdata = await imageDataUrlToImageData(img, context)
-	
-	// Decode the DCC Image to a JSON Schema
+	// Decode the DCC QR-code and process it
+	//UI.scanner.hidden = true	
+	let rawstring = null; 
 	try {
-		let rawstring = await decodeQR(imgdata);
-		
-		if (rawstring.substring(0,4) !== "HC1:") throw Error("missing header in decoded text")
+		rawstring = await decodeQR(file)
 		console.log(rawstring)
-
-		let decoded = await dgcDecode(rawstring);
-		let json = decoded.json;
-
-
-		beautifyQR(rawstring, canvas)
-		UI.showQRCanvas();
-
-
-		// Signature Verification!
-		let isAuthentic = await signature.verify(decoded.raw, decoded.kid)
-		UI.displaySignatureResult(isAuthentic);
-
-
-		// Display the Certificate content
-		const text = JSON.stringify(json, null, 2)
-		UI.displayRawHCERT(text)
-		const hrDGC = decodeDGCValues(json)
-		UI.displayDecodedHCERT(hrDGC);
-
+		
+		// Decode the DGC and display its content
+		loadDGCFromString(rawstring)
+		.catch(err => {
+			UI.showErrorMessage(err,"This is not an EU Digital COVID Certificate")
+		});
 	}
 	catch(err) {
-		UI.showErrorMessage(err,"This is not an EU Digital COVID Certificate")
+		UI.hideQRCanvas();
+		UI.showErrorMessage(err, "This file doesn't contain a valid QR-code")
 	}
-
+	
 });
 
+async function loadDGCFromString(rawstring) {
+	UI.showDecodedText(rawstring)
+	const canvas = UI.getQRCanvas()
+	beautifyQR(rawstring, canvas)
+	UI.showQRCanvas();
 
+	if (!rawstring) throw Error()
+	if (rawstring.substring(0,4) !== "HC1:") throw Error("missing HC1 header")
+
+	let decoded = await dgcDecode(rawstring);
+	let json = decoded.json;
+
+
+	// Signature Verification!
+	let isAuthentic = await signature.verify(decoded.raw, decoded.kid)
+	UI.displaySignatureResult(isAuthentic);
+
+
+	// Display the Certificate content
+	const text = JSON.stringify(json, null, 2)
+	UI.displayRawHCERT(text)
+	const hrDGC = decodeDGCValues(json)
+	UI.displayDecodedHCERT(hrDGC);
+}
+
+
+
+// QR SCANNER
+QrScanner.WORKER_PATH = 'assets/qr-scanner-worker.min.js';
+const qrScanner = new QrScanner(UI.scannerVideo, rawstring => {
+	qrScanner.stop();
+	navigator.vibrate(200);
+	UI.scanner.hidden = true;
+	
+	// Decode the DGC and display its content
+	console.log(rawstring)
+	loadDGCFromString(rawstring)
+	.catch(err => {
+		UI.showErrorMessage(err,"This is not an EU Digital COVID Certificate")
+	});
+});
+
+document.getElementById("start-scan").addEventListener("click", event => {
+	UI.reset();
+	UI.hideQRCanvas();
+	UI.scanner.hidden = false;
+	qrScanner.start()
+	.catch(err => alert(err+"\nThe camera stream is only available on HTTPS"))
+})
 
 
 // FUNCTIONS
@@ -140,32 +154,53 @@ async function imageDataUrlToImageData(image, context) {
 	});
 }
 
+// QR DECODER
+//
+// uses 2 libs for better detection
+// as QrScanner is faster than jsqr but can't detect some barcodes
+// like rotated and logoed qr-codes
+async function decodeQR(imageDataUrl) {
+	let decoded = null;
+	// TODO: Experiment with a Promise.any() based fallback instead of try-catch
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any
+	try {
+		decoded = await QrScanner.scanImage(imageDataUrl)
+		return decoded;
+	}
+	catch { //fallback to the old qr decoder procedure if QrScanner fails
+		console.info("QrScanner detection failed, falling back to jsqr")
+		// create an image structure to get the image size (width, height)
+		async function createImage(file) {
+			return new Promise( (resolve, reject) => {
+				if (!file) reject();
+				let img = new Image()
+				img.src = file;
+				resolve(img) ;
+			})
+		}
+
+		const img = await createImage(imageDataUrl);
+
+		// Now we use a canvas to convert the dataurl image into an ImageData structure
+		// This is needed to decode the QR code with jsQR 
+
+		const canvas = UI.getQRCanvas()
+		canvas.width = img.width;
+		canvas.height = img.height;
+
+		const context = canvas.getContext('2d')
+		const imgdata = await imageDataUrlToImageData(img, context)
+
+		decoded = jsqr(imgdata.data, imgdata.width, imgdata.height);
+		
+		if(decoded) return decoded.data;
+		else throw Error("no QR-code detected")
+	}
+}
 
 //
 // Green Pass decoding
 //
-async function decodeQR(greenpassImageData) {
-	// Decode QR
-	// BarcodeDetector is currently supported only by Chrome mobile and Samsung browser
-	
-	if (!('BarcodeDetector' in window)) {		
-		const greenpass = jsqr(greenpassImageData.data, greenpassImageData.width, greenpassImageData.height);
-		
-		if(greenpass === null) throw Error("no QR code detected")
-
-		return greenpass.data;
-	} 
-	else {
-		const barcodeDetector = new BarcodeDetector({formats: ['qr_code']});
-		
-		const barcodes = await barcodeDetector.detect(greenpassImageData);
-		
-		if(barcodes.length < 1) throw Error("no QR code detected")
-		console.log(barcodes[0])
-
-		return ""+barcodes[0].rawValue;
-	}
-}
 
 function dgcDecode(greenpassStr) {
 

@@ -50,12 +50,12 @@
         
             <div class="container pt-5">
                 <div class="columns is-variable is-6">
-                    <div class="column">
+                    <div class="column is-unselectable">
                         <span class="label is-size-4">Preview</span>
                         <div class="box mb-6">
                             <div class="container">
                                 <div class="block has-text-centered is-flex is-justify-content-center">
-                                    <div id="drag-drop-text">
+                                    <div class="is-hidden-touch" id="drag-drop-text">
                                         <div class="is-size-1">
                                             <i class="fas fa-qrcode"></i>
                                         </div>
@@ -67,6 +67,9 @@
                                     </div>
                                 </div>
 
+                                <div id="qr-scanner" hidden>
+                                    <video id="camera-stream"></video>
+                                </div>
                                 <div class="block canvas-wrapper is-hidden">
                                     <canvas id="qr-canvas"  height=300 width=300>
                                         This browser doesn't support HTML5 Canvas. 
@@ -76,7 +79,14 @@
                                 </div>
                                 
                                 <div class="content has-text-centered mt-3">
-                                    <div class="content">
+                                    <div class="container mb-2 is-hidden-desktop">
+                                        <div class="button is-info is-large" id="start-scan">
+                                            <span class="icon"><i class="fas fa-qrcode"></i></span>
+                                            <span>Scan a QR-code</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="content is-unselectable">
                                         <div class="container is-flex is-justify-content-center is-align-items-center">
                                             <div>
                                                 <span>or</span>
@@ -103,7 +113,7 @@
                             </div>
                         </div>
                         
-                        <div class="container block mb-5">
+                        <div class="container block mb-6">
                             <span class="label is-size-4">Options</span>
                             <div class="container">
                                 <div class="box">
@@ -125,12 +135,12 @@
                                 </div>
                             </div>
                         </div>
-                </div>
+                    </div>
 
                     
                     <div class="column is-two-thirds" id="results-col">
                         <div id="dgc-code" hidden>
-                            <span class="label is-size-4">Decoded content</span>
+                            <span class="label is-size-4">Decoded certificate</span>
                             <pre><code id="dgc-json"></code></pre>
                         </div>
                         <div id="dgc-hr" hidden>
@@ -176,7 +186,7 @@
                                 </div>
                                 <div class="container">
                                     <div class="content">
-                                        <span>This certificate has been signed with an authorized private key</span>
+                                        <span>This certificate has been signed with an authoritative private key</span>
                                     </div>
                                 </div>
                             </div>
@@ -424,7 +434,7 @@
     <div class="section">
         
     </div>
-        <footer class="footer has-text-centered has-background-info-light is-hidden-touch">
+        <footer class="footer is-unselectable has-text-centered has-background-info-light is-hidden-touch">
         <div class="content">
             <div class="title has-text-1">
                 🍕
@@ -457,19 +467,4 @@
         }
     </script>
 </body>
-    <!-- <nav class="navbar is-spaced is-fixed-bottom has-text-centered has-shadow">
-        <div class="container is-fluid p-3">
-            <div class="navbar-item">
-                <div class="video-container">
-                    <video id="camera-stream"></video>
-                </div>
-                <div class="button is-primary" id="start-scan" style="font-size: larger;">
-                    <span class="icon">
-                        <i class="fas fa-qrcode"></i>
-                    </span>
-                    <span>Scan with the device camera</span>
-                </div>
-            </div>
-        </div>
-    </nav> -->
 </html>
