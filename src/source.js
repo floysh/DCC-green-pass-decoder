@@ -110,7 +110,7 @@ async function loadDGCFromString(rawstring) {
 
 
 // QR SCANNER
-QrScanner.WORKER_PATH = 'assets/qr-scanner-worker.min.js';
+QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 const qrScanner = new QrScanner(UI.scannerVideo, rawstring => {
 	qrScanner.stop();
 	navigator.vibrate(200);

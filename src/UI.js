@@ -7,8 +7,8 @@ export function reset() {
 	document.getElementById("dgc-json").innerText = "";
 	document.getElementById("error-bar").hidden = true;
     //document.getElementById("signature-progress").classList.remove("is-hidden");
-	document.getElementById("signature-mismatch-notification").hidden = true;
-	document.getElementById("authentic-notification").hidden = true;
+	document.getElementById("signature-invalid-notification").hidden = true;
+	document.getElementById("signature-verified-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
 	getQRCanvas().height += 0; //clean preview 
 
@@ -165,10 +165,10 @@ export function displaySignatureResult(isAuthentic) {
         case (null): // no keys available for validation
             break; 
         case (false):
-            document.getElementById("signature-mismatch-notification").hidden = false;
+            document.getElementById("signature-invalid-notification").hidden = false;
             break;
         case(true):
-            document.getElementById("authentic-notification").hidden = false;
+            document.getElementById("signature-verified-notification").hidden = false;
             break;
         default:
             break;
