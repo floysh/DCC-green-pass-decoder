@@ -1,6 +1,6 @@
 // Change this number to force a new service worker install
 // and app update
-const SERVICE_WORKER_VERSION = 114
+const SERVICE_WORKER_VERSION = 115
 
 // Delete the old app cached files
 self.addEventListener('activate', function (event) {
@@ -38,8 +38,8 @@ const filesToCache = [
     "assets/icons/icon-192x192.png",
     "assets/icons/icon-48x48.png",
     "assets/icons/icon-72x72.png",
-    "assets/qr-scanner-worker.min.js",
-    "assets/qr-scanner-worker.min.js.map",
+    "qr-scanner-worker.min.js",
+    "qr-scanner-worker.min.js.map",
   ];
   
 const staticCacheName = 'pages-cache-v1';
