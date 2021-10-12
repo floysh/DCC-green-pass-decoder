@@ -14,12 +14,14 @@ This is just a toy app I made while being curious to look at what's inside my ow
 All the processing is done locally and your certificate never leaves your device.
 
 
-#
-##### 🚀 Try it live on https://floysh.github.io/DCC-green-pass-decoder/
+<br>
+
+#### 🚀 Try it live on https://floysh.github.io/DCC-green-pass-decoder/
 
 
 
-#
+<br>
+
 ## Features
 * No need to set up an environment: just load the page and you're ready to scan! 😎
 * Progressive Web App, can work offline and be installed on many devices like a native app.
@@ -27,7 +29,8 @@ All the processing is done locally and your certificate never leaves your device
 * Can both load the QR-code from an existing file or scan it using the device camera (mobile devices only)
 * Signature validation
 
-#
+<br>
+
 # How does it work
 ## Decoding the QR-code
 
@@ -68,8 +71,7 @@ This was a bit more time consuming, mainly because there's no documented way to 
 
 Further details on how this feature has been implemented can be found on [docs/signature-validation.md](docs/signature-validation.md)
 
-#
----
+
 ## Resources
 
 * [Electronic Health Certificate Specification](https://github.com/ehn-dcc-development/hcert-spec/blob/main/hcert_spec.md)
