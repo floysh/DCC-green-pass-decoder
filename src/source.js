@@ -226,11 +226,14 @@ function dgcDecode(greenpassStr) {
 	const [protected_header, unprotected_header, cbor_data, signature] = results[0].value;
 
 	// Extract the signature key identifier (KID) for signature validation
-	let kid = cbor.decode(protected_header).get(4)
-	if (kid) {
+	let kid;
+	kid = cbor.decode(protected_header).get(4)
+	if (!kid) {
+		kid = unprotected_header.get(4)
+	}
 		kid = kid.reduce ( (str, v) => str + String.fromCharCode(v), "") //uint8array -> bstr
 		kid = btoa(kid) //bstr -> base64
-	}
+	
 
 	// Finally, we can decode the CBOR
 	const hcert = cbor.decodeAllSync(cbor_data);
