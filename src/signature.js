@@ -2,7 +2,7 @@
 // SIGNATURE VERIFICATION
 //
 
-import {PublicKey} from "@fidm/x509"
+import {Certificate, PublicKey} from "@fidm/x509"
 import * as cose from "cose-js"
 
 export async function verify(greenpassRawData, kid) {
@@ -32,6 +32,8 @@ export async function verify(greenpassRawData, kid) {
 			const verifier = { key: { x: keyX, y: keyY } };	
 			await cose.sign.verify(greenpassRawData, verifier);
 
+			//console.info("Matching key", key);
+			//console.info("KID", kid)
 			verified = true;
 			break;
 		}
@@ -48,4 +50,17 @@ export async function verify(greenpassRawData, kid) {
 	} */
 
 	return verified;
+}
+
+export async function getIdentityFromKID(kid) {
+	let res = await fetch("assets/it_dgc_certificates.json");
+	let certstore = await res.json();
+	if (!certstore) return null;
+	let eligible_certs = certstore[kid];
+
+	if (!eligible_certs) return false;
+
+	let CERT_PEM_STR = `-----BEGIN CERTIFICATE-----\n${eligible_certs[0]}\n-----END CERTIFICATE-----`
+	let cert = Certificate.fromPEM(CERT_PEM_STR);
+	return cert;
 }

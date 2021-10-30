@@ -18,6 +18,11 @@ export function reset() {
 	document.getElementById("recovery-group").hidden = true;
 	document.getElementById("test-group").hidden = true;
 
+	signatureDetails.hidden = true;
+	document.getElementById("cert-co").innerText = "unavailable"
+	document.getElementById("kid").innerText = "";
+	document.getElementById("alg").innerText = ""
+
 }
 
 
@@ -39,7 +44,7 @@ export function hideQRCanvas() {
 
 
 
-// TOGGLE
+// Human Readable TOGGLE
 
 document.querySelector("#dgcHumanReadableToggle").addEventListener("click", event => {
     toggleDecodedHCertView(event.target.checked)
@@ -53,9 +58,22 @@ export function toggleDecodedHCertView(checked) {
 // Apply toggle default state
 window.addEventListener("load", () => {
 	const toggle = document.querySelector("#dgcHumanReadableToggle");
-	document.querySelector("#dgc-code").hidden = toggle.checked;
-	document.querySelector("#dgc-hr").hidden = !(toggle.checked);
+	toggleDecodedHCertView(toggle.checked)
 });
+
+
+// Signature details TOGGLE
+
+const signatureDetailsToggle = document.querySelector("#displaySignatureDetailsToggle")
+const signatureDetails = document.querySelector("#signature-details-field")
+
+function toggleSignatureDetails(checked) {
+	signatureDetails.hidden = !checked;
+}
+signatureDetailsToggle.addEventListener("click", event => {
+    toggleSignatureDetails(event.target.checked)
+});
+
 
 
 // ERROR BAR
@@ -154,6 +172,9 @@ export function displayDecodedHCERT(greenpassJSON) {
 
 
 // Display raw certificate values
+export function displayRawText(text) {
+    document.querySelector("#dgc-raw").textContent = text
+}
 export function displayRawHCERT(json) {
     document.querySelector("#dgc-json").textContent = json
 }
@@ -175,6 +196,50 @@ export function displaySignatureResult(isAuthentic) {
     }
 }
 
+export function displaySignatureDetails(kid, alg) {
+	let displayStatus = signatureDetailsToggle.checked
+	toggleSignatureDetails(displayStatus);
+
+	document.getElementById("kid").innerText = kid;
+
+	/* fetch("assets/it_dgc_public_keys.json")
+	.then(res => res.json())
+	.then(keys => {
+		document.getElementById("pubkey-pem").innerText = keys[kid][0]
+	})
+	.catch(e => {
+		console.error(e)
+	}) */
+
+	const alg_decoder = {
+		"-37": "PS256 (RSASSA-PSS w/ SHA-256)",
+		"-7" : "ES256 (ECDSA w/ SHA-256)",	
+	}
+	/* const alg_decoder = {
+		"-39": "RSASSA-PSS w/ SHA-512",
+		"-38": "RSASSA-PSS w/ SHA-384",
+		"-37": "RSASSA-PSS w/ SHA-256",
+		"-36": "ECDSA w/ SHA-512",
+		"-35": "ECDSA w/ SHA-384",
+
+		"-15": "SHA-2 256-bit Hash",
+		"-15": "SHA-2 256-bit Hash truncated to 64-bits",
+		"-14": "SHA-1 Hash",
+		
+		"-8": "EdDSA",
+		"-7": "ECDSA w/ SHA-256",
+		"4": "HMAC w/ SHA-256 truncated to 64 bits",
+		"5": "HMAC w/ SHA-256",
+		"6": "HMAC w/ SHA-384",
+		"7": "HMAC w/ SHA-512",
+	} */
+
+	document.getElementById("alg").innerText = (alg_decoder[alg]) ? alg_decoder[alg] : alg;
+}
+
+export function displayIssuer(str) {
+	document.getElementById("cert-co").innerText = str
+}
 
 
 export const scannerVideo = document.getElementById("camera-stream")

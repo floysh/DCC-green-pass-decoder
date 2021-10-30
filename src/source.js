@@ -1,19 +1,13 @@
 import jsqr from 'jsqr';
-import * as base45 from 'base45';
-import * as zlib from 'pako';
-import * as cbor from 'cbor';
 import QRCode from "qrcode";
 import QrScanner from "qr-scanner";
 
-import {decodeValue, decodeDGCValues} from './valuedecoder'
+import {EUGreenCertificate} from './DGC'
 import * as signature from './signature'
 import * as UI from './UI'
 
 console.log("😃✔️👍")
 
-
-
-// UI FUNCTIONS
 
 
 // DRAG & DROP
@@ -84,27 +78,45 @@ reader.addEventListener('load', async (e) => {
 
 async function loadDGCFromString(rawstring) {
 	UI.showDecodedText(rawstring)
+	
+	// Load QR Preview
 	const canvas = UI.getQRCanvas()
 	beautifyQR(rawstring, canvas)
 	UI.showQRCanvas();
 
-	if (!rawstring) throw Error()
-	if (rawstring.substring(0,4) !== "HC1:") throw Error("missing HC1 header")
+	// Load the DCC
+	if (!rawstring) throw Error("Invalid DGC: "+rawstring)
+	let dgc = new EUGreenCertificate(rawstring);
 
-	let decoded = await dgcDecode(rawstring);
-	let json = decoded.json;
-
+	let rawdgc = dgc.getRawCwt()
+	let kid = dgc.getKid()
+	let algid = dgc.getSignAlgorithm()
 
 	// Signature Verification!
-	let isAuthentic = await signature.verify(decoded.raw, decoded.kid)
-	UI.displaySignatureResult(isAuthentic);
+	signature.verify(rawdgc, kid)
+	.then(isAuthentic => {
+		UI.displaySignatureResult(isAuthentic);
+		UI.displaySignatureDetails(kid, algid);
+	})
 
-
-	// Display the Certificate content
-	const text = JSON.stringify(json, null, 2)
-	UI.displayRawHCERT(text)
-	const hrDGC = decodeDGCValues(json)
+	// Display the Certificate content)
+	// raw content
+	UI.displayRawText(dgc.getEncodedString())
+	UI.displayRawHCERT(dgc.toRawString())
+	// parsed content
+	const hrDGC = dgc.withDecodedValues()
 	UI.displayDecodedHCERT(hrDGC);
+
+	// Signature/Cert details
+	signature.getIdentityFromKID(kid, algid)
+	.then(cert => {
+		if (cert) {
+			let subject = `${cert.subject.commonName} (${cert.subject.countryName})`;
+			let issuer = `${cert.issuer.commonName} (${cert.issuer.countryName})`;
+			UI.displayIssuer(`${subject}, issued by ${issuer}`)
+		}
+	})
+	
 }
 
 
@@ -197,51 +209,6 @@ async function decodeQR(imageDataUrl) {
 		else throw Error("no QR-code detected")
 	}
 }
-
-//
-// Green Pass decoding
-//
-
-function dgcDecode(greenpassStr) {
-
-	// Digital Covid Certificate structure:
-	// [JSON Schema] ==> CBOR serialization ==> {headers; CBOR; COSE signature} => 
-	// => zlib compression => base45 encoding => QR
-	//
-	// For more details, see Section 3 of:
-	// https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_v1_en.pdf
-
-
-	// Remove the "HC1:" heading
-	const greenpassBody = greenpassStr.substr(4);
-
-	// Decode the base45 representation
-	const decodedData = base45.decode(greenpassBody);
-
-	// Decompression (zlib)
-	const cwt = zlib.inflate(decodedData);
-
-	// Now we have the COSE message
-	const results = cbor.decodeAllSync(cwt);
-	const [protected_header, unprotected_header, cbor_data, signature] = results[0].value;
-
-	// Extract the signature key identifier (KID) for signature validation
-	let kid;
-	kid = cbor.decode(protected_header).get(4)
-	if (!kid) {
-		kid = unprotected_header.get(4)
-	}
-		kid = kid.reduce ( (str, v) => str + String.fromCharCode(v), "") //uint8array -> bstr
-		kid = btoa(kid) //bstr -> base64
-	
-
-	// Finally, we can decode the CBOR
-	const hcert = cbor.decodeAllSync(cbor_data);
-	const out = hcert[0].get(-260).get(1);
-
-	return {raw: cwt, json: out, kid: kid};
-}
-
 
 
 // Redraw QR 
