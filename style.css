@@ -22,7 +22,7 @@ body {
     }
 }
 
-pre {
+pre.cert-panel {
     min-height: 30.5rem    
 }
 
