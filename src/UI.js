@@ -6,7 +6,7 @@ export function reset() {
 
 	document.getElementById("dgc-json").innerText = "";
 	document.getElementById("error-bar").hidden = true;
-    //document.getElementById("signature-progress").classList.remove("is-hidden");
+    document.getElementById("progress").classList.remove("is-hidden");
 	document.getElementById("signature-invalid-notification").hidden = true;
 	document.getElementById("signature-verified-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
@@ -23,6 +23,11 @@ export function reset() {
 	document.getElementById("kid").innerText = "";
 	document.getElementById("alg").innerText = ""
 
+}
+
+// Progress indicator 
+export function setProgressText(msg) {
+	document.getElementById("progress-text").innerText = msg;
 }
 
 
@@ -64,7 +69,7 @@ window.addEventListener("load", () => {
 
 // Signature details TOGGLE
 
-const signatureDetailsToggle = document.querySelector("#displaySignatureDetailsToggle")
+export const signatureDetailsToggle = document.querySelector("#displaySignatureDetailsToggle")
 const signatureDetails = document.querySelector("#signature-details-field")
 
 function toggleSignatureDetails(checked) {
@@ -85,6 +90,7 @@ export function showErrorMessage(err,err_header) {
 	document.querySelector("#dgc-json").textContent = errtext;
 	document.querySelector("#error-text").textContent = err;
 	document.querySelector("#error-bar").hidden = false;
+	document.querySelector("#progress").classList.add("is-hidden");
 }
 
 export function showDecodedText(text) {
@@ -181,7 +187,7 @@ export function displayRawHCERT(json) {
 
 
 export function displaySignatureResult(isAuthentic) {
-    document.getElementById("signature-progress").classList.add("is-hidden");
+    document.getElementById("progress").classList.add("is-hidden");
     switch(isAuthentic) {
         case (null): // no keys available for validation
             break; 
@@ -198,7 +204,9 @@ export function displaySignatureResult(isAuthentic) {
 
 export function displaySignatureDetails(kid, alg) {
 	let displayStatus = signatureDetailsToggle.checked
-	toggleSignatureDetails(displayStatus);
+	if (displayStatus === true) {
+		signatureDetails.hidden = false
+	}
 
 	document.getElementById("kid").innerText = kid;
 
@@ -237,7 +245,7 @@ export function displaySignatureDetails(kid, alg) {
 	document.getElementById("alg").innerText = (alg_decoder[alg]) ? alg_decoder[alg] : alg;
 }
 
-export function displayIssuer(str) {
+export function displaySigner(str) {
 	document.getElementById("cert-co").innerText = str
 }
 

@@ -51,10 +51,16 @@ reader.addEventListener('error', () => {
 // event fired when file reading finished
 reader.addEventListener('load', async (e) => {
 	UI.reset();
+	UI.setProgressText("Processing image data")
 
     // Read the file content
 	let file = e.target.result;
-	if (file.substr(0,10) != "data:image") return UI.showErrorMessage(Error("file is not an image"), "Cannot load this file")
+	if (file.substr(0,10) != "data:image") {
+		UI.hideQRCanvas()
+		UI.showErrorMessage(Error("file is not an image"), "Cannot load this file")
+		return ;
+	}
+		
 	
 	// Decode the DCC QR-code and process it
 	//UI.scanner.hidden = true	
@@ -85,20 +91,14 @@ async function loadDGCFromString(rawstring) {
 	UI.showQRCanvas();
 
 	// Load the DCC
+	UI.setProgressText("Decoding Green Certificate")
 	if (!rawstring) throw Error("Invalid DGC: "+rawstring)
 	let dgc = new EUGreenCertificate(rawstring);
 
 	let rawdgc = dgc.getRawCwt()
 	let kid = dgc.getKid()
 	let algid = dgc.getSignAlgorithm()
-
-	// Signature Verification!
-	signature.verify(rawdgc, kid)
-	.then(isAuthentic => {
-		UI.displaySignatureResult(isAuthentic);
-		UI.displaySignatureDetails(kid, algid);
-	})
-
+	
 	// Display the Certificate content)
 	// raw content
 	UI.displayRawText(dgc.getEncodedString())
@@ -107,13 +107,24 @@ async function loadDGCFromString(rawstring) {
 	const hrDGC = dgc.withDecodedValues()
 	UI.displayDecodedHCERT(hrDGC);
 
+	// Signature Verification!
+	UI.setProgressText("Verifying signature")
+	signature.verify(rawdgc, kid)
+	.then(isAuthentic => {
+		UI.displaySignatureResult(isAuthentic);
+	})
+
 	// Signature/Cert details
 	signature.getIdentityFromKID(kid, algid)
 	.then(cert => {
+		UI.displaySignatureDetails(kid, algid);
 		if (cert) {
 			let subject = `${cert.subject.commonName} (${cert.subject.countryName})`;
 			let issuer = `${cert.issuer.commonName} (${cert.issuer.countryName})`;
-			UI.displayIssuer(`${subject}, issued by ${issuer}`)
+			UI.displaySigner(`${subject}, issued by ${issuer}`)
+		}
+		else {
+			UI.displaySigner(`unknown`)
 		}
 	})
 	
@@ -133,6 +144,7 @@ const qrScanner = new QrScanner(UI.scannerVideo, rawstring => {
 	loadDGCFromString(rawstring)
 	.catch(err => {
 		UI.showErrorMessage(err,"This is not an EU Digital COVID Certificate")
+		UI.hideQRCanvas()
 	});
 });
 
@@ -168,9 +180,9 @@ async function imageDataUrlToImageData(image, context) {
 
 // QR DECODER
 //
-// uses 2 libs for better detection
+// uses 2 libs for a better detection
 // as QrScanner is faster than jsqr but can't detect some barcodes
-// like rotated and logoed qr-codes
+// (mostly rotated and logoed qr-codes)
 async function decodeQR(imageDataUrl) {
 	let decoded = null;
 	// TODO: Experiment with a Promise.any() based fallback instead of try-catch
