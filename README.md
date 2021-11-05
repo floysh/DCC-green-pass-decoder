@@ -7,7 +7,7 @@
   <br>
 </h1>
 
-A Progressive Web App that can read the EU Digital COVID Certificate QR-codes.
+A Progressive Web App that can read EU Digital COVID Certificate QR-codes.
 
 This is just a toy app I made while being curious to look at what's inside my own Green Certificate. Unlike other decoders available online, it doesn't require to set up dependencies or upload the certificate to a remote server. It can be used by average users without having to interact with the terminal (scary! hacker stuff! 🐱‍💻).
 
@@ -28,6 +28,30 @@ All the processing is done locally and your certificate never leaves your device
 * Can both display the raw certificate or parse it to make the fields human readable.
 * Can both load the QR-code from an existing file or scan it using the device camera (mobile devices only)
 * Signature validation
+
+<br>
+
+# How to edit
+
+Clone the repository:
+```(bash)
+git clone https://github.com/floysh/DCC-green-pass-decoder
+```
+
+Install dependencies:
+```(bash)
+cd ./DCC-green-pass-decoder
+npm install
+```
+
+Run the watcher:
+```(bash)
+npm run watch
+```
+this will generate new builds of the JS bundle whenever you change something in the `src/` folder.
+
+Then start your favorite local webserver in `public/`
+
 
 <br>
 
