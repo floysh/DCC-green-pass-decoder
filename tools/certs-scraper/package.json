@@ -1,0 +1,22 @@
+{
+  "name": "dcc-it-cert-scraper",
+  "version": "1.0.0",
+  "description": "An attempt to get the public keys used by VerificaC19 for validating DCC signatures",
+  "main": "index.js",
+  "scripts": {
+    "fetch": "node index.js",
+    "export-certs": "cross-env EXPORT_CERTIFICATES=true node index.js",
+    "export-keys": "cross-env EXPORT_KEYS=true node index.js",
+    "export-all": "cross-env EXPORT_CERTIFICATES=true EXPORT_KEYS=true node index.js",
+    "clean": "rm -r out",
+    "shell": "node --experimental-repl-await"
+  },
+  "type": "module",
+  "author": "floysh",
+  "dependencies": {
+    "@fidm/asn1": "^1.0.4",
+    "@fidm/x509": "^1.2.1",
+    "cross-fetch": "^3.1.4",
+    "sha256-uint8array": "^0.10.3"
+  }
+}
