@@ -1,13 +1,16 @@
 import {fetchCerts, extractKeys} from "./utils.js";
+import {Certificate} from "@fidm/x509";
 import * as fs from "fs";
 import * as path from "path";
 
 const OUT_DIR = (process.env.OUT_DIR) ? process.env.OUT_DIR : 'out/';
 const CERTS_DIR = `${OUT_DIR}/certs`;
 const KEYS_DIR = `${OUT_DIR}/keys`;
+const MARKDOWN_DIR = `${OUT_DIR}`;
 
 const CERT_FILE = "it_dgc_certificates.json";
 const KEYS_FILE = "it_dgc_public_keys.json"
+const MARKDOWN_FILE = "certificates.md"
 
 
 main();
@@ -66,6 +69,53 @@ async function main() {
                 i++;
             }
         }
+
+    }
+
+    console.info("Done.")
+
+    if (process.env.EXPORT_MARKDOWN) {
+        console.info("Generating markdown table...")
+        // Create the export directory if it doesn't exists
+        fs.mkdirSync(MARKDOWN_DIR, { recursive: true });
+
+        const header =
+        "# EU DCC signing certificates\n"+
+        "\n"+
+        "\n"+
+        `updated on ${new Date().toGMTString()}\n`+
+        "\n"+
+        "This list contains the certificates used by the Italian Digital COVID Certificate validation app VerificaC19.\n"+
+        "\n"+
+        "| KEY IDENTIFIER (KID) | COUNTRY | ISSUER | SUBJECT | PEM (base64) |\n"+
+        "|----------------------|---------|--------|---------|--------------|\n"
+        /* "| COUNTRY CODE | KEY IDENTIFIER (KID) | PEM (base64) |\n"+
+        "|--------------|----------------------|--------------|\n" */
+
+        let table = "";
+
+        for (let kid of Object.keys(certStore)) {
+            for (let cert of certStore[kid]) {
+                const pem = `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----`
+                let country = "", subject = "", issuer = "";
+                try {
+                    const certificate = Certificate.fromPEM(pem);
+                    country = certificate.issuer.countryName;
+                    issuer = certificate.issuer.organizationName;
+                    subject = certificate.subject.organizationName;
+                }
+                catch(err) {
+                    //console.error(err);
+                }
+                let line = `| ${kid} | ${country} | ${issuer} | ${subject} | ${cert} |\n`
+                //let line = `| ${country} | ${kid} | ${cert} |\n`;
+                table += line;
+                
+            }
+        }
+        
+        let filename = `${MARKDOWN_DIR}/${MARKDOWN_FILE}`
+        fs.writeFile(filename, header+table, () => {});
 
     }
 

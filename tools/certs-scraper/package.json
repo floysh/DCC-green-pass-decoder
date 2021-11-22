@@ -7,7 +7,8 @@
     "fetch": "node index.js",
     "export-certs": "cross-env EXPORT_CERTIFICATES=true node index.js",
     "export-keys": "cross-env EXPORT_KEYS=true node index.js",
-    "export-all": "cross-env EXPORT_CERTIFICATES=true EXPORT_KEYS=true node index.js",
+    "export-markdown": "cross-env EXPORT_MARKDOWN=true node index.js",
+    "export-all": "cross-env EXPORT_CERTIFICATES=true EXPORT_KEYS=true EXPORT_MARKDOWN=true node index.js",
     "clean": "rm -r out",
     "shell": "node --experimental-repl-await"
   },

@@ -6,15 +6,16 @@ The scripts output can be found in the `./out` directory.
 
 ## Usage
 
-Run `npm install` to set up the required dependencies.
+After cloning, start a shell in this directory and run `npm install` to set up the required dependencies.
 
-Then run one of the following scripts with `npm run`
+Then run one of the following scripts with `npm run $script-name`
 
-| Script | Description |
-|--------|-------------|
-| `fetch` | Builds kid-indexed lists of signer certificates and public keys. |
-| `export-certs` | Builds kid-indexed lists of signer certificates and public keys. Exports each certificate as a DER certificate (`.cer`). |
-| `export-keys` | Builds kid-indexed lists of signer certificates and public keys. Exports each certificate's public key as a `.pem` key file.   |
-| `export-all` | Same as running `export-certs` and `export-keys` in a row, but faster. |
+| Script name | Description |
+|-------------|-------------|
+| `fetch` | Downloads the certificates from PN-DGC. Builds kid-indexed lists of signer certificates and public keys. |
+| `export-certs` | Runs `npm run fetch`. Exports each certificate as a DER certificate (`.cer`). |
+| `export-keys` | Runs `npm run fetch`. Exports each certificate's public key as a `.pem` key file.   |
+| `export-markdown` | Creates a markdown table containing all the fetched certificates |
+| `export-all` | Same as running all the export commands above. |
 | `clean` | Wipes the `./out` directory. |
 | `shell` | (development) Starts a local node shell with experimental support for async/await. |
