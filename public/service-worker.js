@@ -1,6 +1,6 @@
 // Change this number to force a new service worker install
 // and app update
-const SERVICE_WORKER_VERSION = 116
+const SERVICE_WORKER_VERSION = 117
 
 // Delete the old app cached files
 self.addEventListener('activate', function (event) {
@@ -28,6 +28,7 @@ const filesToCache = [
     'style.css',
     'bundle.js',
     'index.html',
+    "assets/it_dgc_certificates.json",
     "assets/it_dgc_public_keys.json",
     "assets/icons/icon-128x128.png",
     "assets/icons/icon-152x152.png",
