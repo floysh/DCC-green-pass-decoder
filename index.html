@@ -20,7 +20,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-switch@2.0.0/dist/css/bulma-switch.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
     <link rel="stylesheet" href="style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,8 +38,12 @@
             </div>
             <div class="container block is-unselectable">
                 <div class="notification is-info is-light">
+                    <button class="delete" onClick="this.parentElement.remove()">Dismiss</button>
                     <div class="mb-2">
-                        <strong>🕵️‍♀️ Privacy</strong>
+                        <strong>
+                            <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                            <span>Privacy</span>
+                        </strong>
                     </div>
                     <div class="block">
                         This app works entirely on your device and doesn't upload your data anywhere. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
@@ -55,13 +58,16 @@
                         <div class="box mb-6">
                             <div class="container">
                                 <div class="block has-text-centered is-flex is-justify-content-center">
-                                    <div class="is-hidden-touch" id="drag-drop-text">
+                                    <div id="drag-drop-text">
                                         <div class="is-size-1">
                                             <i class="fas fa-qrcode"></i>
                                         </div>
                                         <div>
-                                            <p>
+                                            <p class="is-hidden-touch">
                                                 Drag & Drop a QR code on this box  
+                                            </p>
+                                            <p class="is-hidden-desktop">
+                                                No certificate loaded
                                             </p>
                                         </div>
                                     </div>
@@ -79,10 +85,10 @@
                                 </div>
                                 
                                 <div class="content has-text-centered mt-3">
-                                    <div class="container mb-2 is-hidden-desktop">
-                                        <div class="button is-info is-large" id="start-scan">
+                                    <div class="container mb-2">
+                                        <div class="button is-info is-medium" id="start-scan">
                                             <span class="icon"><i class="fas fa-qrcode"></i></span>
-                                            <span>Scan a QR-code</span>
+                                            <span>Scan a QR code</span>
                                         </div>
                                     </div>
 
@@ -141,7 +147,7 @@
                                         <div class="columns is-mobile is-vcentered">
                                             <div class="column">
                                                 <span class="has-text-weight-semibold pr-3">
-                                                    <label for="displaySignatureDetailsToggle" class="mr-2">Show addititional signature information</label>
+                                                    <label for="displaySignatureDetailsToggle" class="mr-2">Show signature details</label>
                                                 </span>
                                             </div>
                                             <div class="column is-narrow has-text-right">
@@ -173,7 +179,7 @@
                             </div>
                         </div>
                         <div id="dgc-hr" hidden>
-                            <span class="label is-size-4">Certificate content</span>
+                            <span class="label is-size-4 is-unselectable">Certificate content</span>
                             <div class="notification is-warning is-light mb-6" id="error-bar" hidden>
                                 <div class="mb-2">
                                     <strong>⚠️ This is not an EU Digital COVID Certificate</strong>
@@ -199,7 +205,7 @@
                                 </span>
                             </div>
 
-                            <div id="load-tip" class="mt-6 mb-6">
+                            <div id="load-tip" class="mt-6 mb-6 is-unselectable">
                                 <div class="section has-text-centered content is-vcentered">
                                     <p class="is-size-2 mb-5">🔍</p>
                                     <p>
@@ -248,7 +254,7 @@
                                     </span>
                                 </div>
                                 <div class="mt-3">
-                                    <span class=" is-size-6 mr-2">Signer identity: </span>
+                                    <span class=" is-size-6 mr-2">Signer: </span>
                                     <span id="cert-co" class="is-size-6"></span>
                                 </div>
                                 <!-- <div class="mt-3">
@@ -301,7 +307,7 @@
                             </div>
 
 
-                            <div class="mt-6" id="vaccination-group" hidden>
+                            <div id="vaccination-group" class="mt-6" hidden>
                                 <div class="field">
                                     <span class="label">Unique Certificate Identifier (UVCI) </span>
                                     <input type="text" id="v-ci" class="dgc input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
@@ -358,7 +364,7 @@
                                 
                             </div>
 
-                            <div class="mt-6"  id="test-group" hidden>
+                            <div id="test-group" class="mt-6" hidden>
                                 <div class="field">
                                     <span class="label">Unique Certificate Identifier (UVCI) </span>
                                     <input type="text" id="t-ci" class="dgc test input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
@@ -414,7 +420,7 @@
                             </div>
 
 
-                            <div class="mt-6" id="recovery-group" hidden>
+                            <div id="recovery-group" class="mt-6" hidden>
                                 <div class="field">
                                     <span class="label">Unique Certificate Identifier (UVCI) </span>
                                     <input type="text" id="r-ci" class="dgc recovery input" placeholder="e.g 01ITE7300E1AB2A84C719004F103DCB1F70A#6" readonly>
@@ -492,7 +498,7 @@
     </div>
         <footer class="footer is-unselectable has-text-centered has-background-info-light is-hidden-touch">
         <div class="content">
-            <div class="title has-text-1">
+            <div class="is-size-2 mb-3">
                 🍕
             </div>
             <div>
