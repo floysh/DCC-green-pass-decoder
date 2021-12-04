@@ -26,7 +26,7 @@ All the processing is done locally and your certificate never leaves your device
 * No need to set up an environment: just load the page and you're ready to scan! 😎
 * Progressive Web App, can work offline and be installed on many devices like a native app.
 * Can both display the raw certificate or parse it to make the fields human readable.
-* Can both load the QR-code from an existing file or scan it using the device camera (mobile devices only)
+* Can both load the QR-code from an existing file or scan it using the device camera
 * Signature validation
 
 <br>
