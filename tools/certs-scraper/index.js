@@ -83,9 +83,11 @@ async function main() {
         "# EU DCC signing certificates\n"+
         "\n"+
         "\n"+
-        `updated on ${new Date().toGMTString()}\n`+
+        `**Last updated on:** ${new Date().toGMTString()}\n`+
         "\n"+
-        "This list contains the certificates used by the Italian Digital COVID Certificate validation app VerificaC19.\n"+
+        `**Total certificates:** ${Object.keys(certStore).length}\n`+
+        "\n"+
+        "This table contains the certificates used by the Italian validation app VerificaC19.\n"+
         "\n"+
         "| KEY IDENTIFIER (KID) | COUNTRY | ISSUER | SUBJECT | PEM (base64) |\n"+
         "|----------------------|---------|--------|---------|--------------|\n"
@@ -107,7 +109,7 @@ async function main() {
                 catch(err) {
                     //console.error(err);
                 }
-                let line = `| ${kid} | ${country} | ${issuer} | ${subject} | ${cert} |\n`
+                let line = `| \`${kid}\` | ${country} | ${issuer} | ${subject} | ${cert} |\n`
                 //let line = `| ${country} | ${kid} | ${cert} |\n`;
                 table += line;
                 
