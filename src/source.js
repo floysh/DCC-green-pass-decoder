@@ -113,6 +113,10 @@ async function loadDGCFromString(rawstring) {
 	.then(isAuthentic => {
 		UI.displaySignatureResult(isAuthentic);
 	})
+	.catch(err => {
+		UI.setProgressText("Failed to load the signer certificate list.\nPerhaps your network is not available?\n")
+		window.setTimeout(() => {UI.hideProgress()}, 3500, null) 
+	})
 
 	// Signature/Cert details
 	signature.getIdentityFromKID(kid, algid)
@@ -136,7 +140,7 @@ async function loadDGCFromString(rawstring) {
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 const qrScanner = new QrScanner(UI.scannerVideo, rawstring => {
 	qrScanner.stop();
-	navigator.vibrate(200);
+	if ("vibrate" in navigator) navigator.vibrate(200);
 	UI.scanner.hidden = true;
 	
 	// Decode the DGC and display its content
@@ -153,7 +157,10 @@ document.getElementById("start-scan").addEventListener("click", event => {
 	UI.hideQRCanvas();
 	UI.scanner.hidden = false;
 	qrScanner.start()
-	.catch(err => alert(err+"\nThe camera stream is only available on HTTPS"))
+	.catch(err => {
+		alert(err+"\nThe camera stream is only available on HTTPS");
+		UI.scanner.hidden = false;
+	})
 })
 
 

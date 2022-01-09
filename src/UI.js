@@ -29,6 +29,9 @@ export function reset() {
 export function setProgressText(msg) {
 	document.getElementById("progress-text").innerText = msg;
 }
+export function hideProgress() {
+	document.getElementById("progress").classList.add("is-hidden");
+}
 
 
 // PREVIEW CANVAS
