@@ -37,6 +37,32 @@
                 <h1 class="title">EU Digital COVID Certificate decoder</h1>
             </div>
             <div class="container block is-unselectable">
+                <div id="offline-ready-notification" class="notification is-success is-light is-hidden">
+                    <button class="delete" onClick="this.parentElement.remove()">Dismiss</button>
+                    <div>
+                        <strong>
+                            <span class="icon"><i class="fas fa-download"></i></span>
+                            <span>App is ready for offline use</span>
+                        </strong>
+                    </div>
+                </div>
+                <div id="update-notification" class="notification is-success is-light is-hidden">
+                    <button class="delete" onClick="this.parentElement.remove()">Dismiss</button>
+                    <div class="mb-2">
+                        <strong>
+                            <span class="icon"><i class="fas fa-sync"></i></span>
+                            <span>App update available</span>
+                        </strong>
+                    </div>
+                    <div class="block">
+                        Updates include bug fixes and up to date signer certificates. Reload to run the latest version.
+                    </div>
+                    <div class="field block">
+                        <div class="control">
+                            <a href="." id="app-update-btn" class="button is-success">Reload</a>
+                        </div>
+                    </div>
+                </div>
                 <div class="notification is-info is-light">
                     <button class="delete" onClick="this.parentElement.remove()">Dismiss</button>
                     <div class="mb-2">
@@ -46,7 +72,7 @@
                         </strong>
                     </div>
                     <div class="block">
-                        This app works entirely on your device and doesn't upload your data anywhere. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
+                        This app works entirely on your device. You can always <a href="https://github.com/floysh/DCC-green-pass-decoder">check the source code</a> if you don't trust me 🙂
                     </div>
                 </div>
             </div>
@@ -476,11 +502,11 @@
                 <div class="notification-body">
                     <div class="content">
                         <p>
-                            This is <u>not an official validation tool</u> but a simple viewer of what is inside the QR code of the European Digital Covid Certificate. 
-                            If you need to check the validity of a certificate, use the official app provided by the authorities of your country.
+                            <b><u>This is not an official validation tool</u></b> but a simple viewer of what is inside the QR code of the European Digital Covid Certificate. 
+                            If you need to check for the validity of a certificate, please use the official app provided by the authorities of your country.
                         </p>
                         <p>
-                            For Italy, the official Digital Green Certificate verification app is VerificaC19. 
+                            For Italy, the official validation app is VerificaC19. 
                             You can read more about it and download it from the 
                             <a href="https://www.dgc.gov.it/web/app.html">
                                 <span>official government site</span> 
@@ -496,7 +522,7 @@
     <div class="section">
         
     </div>
-        <footer class="footer is-unselectable has-text-centered has-background-info-light is-hidden-touch">
+    <footer class="footer is-unselectable has-text-centered has-background-info-light">
         <div class="content">
             <div class="is-size-2 mb-3">
                 🍕
@@ -520,10 +546,48 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js', {scope: '/DCC-green-pass-decoder/'})
-            .then(function(registration) {
+            .then(registration => {
                 console.log('Registration successful, scope is:', registration.scope);
+
+                function listenForWaitingServiceWorker(reg, callback) {
+                    function awaitStateChange() {
+                        reg.installing.addEventListener('statechange', function() {
+                        if (this.state === 'installed') callback(reg);
+                        });
+                    }
+                    if (reg.waiting) return callback(reg);
+                    if (reg.installing) awaitStateChange();
+                    reg.addEventListener('updatefound', awaitStateChange);
+                }
+
+                listenForWaitingServiceWorker(registration, () => {
+                    //console.info("Service worker updated!");
+                    if (navigator.serviceWorker.controller) {
+                        // A previous service worker version was already installed
+                        document.getElementById("update-notification").classList.remove("is-hidden");
+                        document.getElementById("app-update-btn").addEventListener("click", event => {
+                            event.preventDefault();
+                            registration.waiting.postMessage('SKIP_WAITING');
+                            window.location.reload();
+                        })
+                    }
+                    else {
+                        // First service worker installation
+                        document.getElementById("offline-ready-notification").classList.remove("is-hidden");
+                    }
+                })
+
+                // refresh every opened tab/window when the user hits the reload button
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload()
+                    if (!refreshing) {
+                        refreshing = true
+                    }
+                })
+
             })
-            .catch(function(error) {
+            .catch(error => {
                 console.log('Service worker registration failed, error:', error);
             });
         }

@@ -1,27 +1,6 @@
 // Change this number to force a new service worker install
 // and app update
-const SERVICE_WORKER_VERSION = 119
-
-// Delete the old app cached files
-self.addEventListener('activate', function (event) {
-  event.waitUntil(
-    caches.keys().then(function (cacheNames) {
-      return Promise.all(
-        cacheNames
-          .filter(function (cacheName) {
-            // Return true if you want to remove this cache,
-            // but remember that caches are shared across
-            // the whole origin
-            return true;
-          })
-          .map(function (cacheName) {
-            return caches.delete(cacheName);
-          }),
-      );
-    }),
-  );
-});
-
+const SERVICE_WORKER_VERSION = 125
 
 // Cache the app main files
 const filesToCache = [
@@ -43,17 +22,42 @@ const filesToCache = [
     "qr-scanner-worker.min.js.map",
   ];
   
-const staticCacheName = 'pages-cache-v1';
+const staticCacheName = `app-cache-v${SERVICE_WORKER_VERSION}`;
+  
 
 self.addEventListener('install', event => {
     console.log('Attempting to install service worker and cache static assets');
     event.waitUntil(
         caches.open(staticCacheName)
         .then(cache => {
-        return cache.addAll(filesToCache);
+          return cache.addAll(filesToCache);
         })
     );
 });
+
+// Delete the old app cached files
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys().then(function (cacheNames) {
+      return Promise.all(
+        cacheNames
+          .filter(function (cacheName) {
+            // Return true if you want to remove this cache,
+            // but remember that caches are shared across
+            // the whole origin
+            if (cacheName !== staticCacheName) {
+              //console.warn(`${cacheName} will be purged from Cache Storage`);
+              return true;
+            }
+          })
+          .map(function (cacheName) {
+            return caches.delete(cacheName);
+          }),
+      );
+    }),
+  );
+});
+
 
 
 // Cache the valueset .json files
@@ -82,4 +86,13 @@ self.addEventListener('fetch', event => {
 
           })
     );
+});
+
+
+// Wait for user prompt before force replacing an existing service worker
+// as explained by: https://whatwebcando.today/articles/handling-service-worker-updates/
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
