@@ -24,14 +24,16 @@
     "watchify": "^4.0.0"
   },
   "scripts": {
-    "start": "watchify src/source.js -o public/bundle.js -v --debug",
+    "watch": "watchify src/source.js -o public/bundle.js -v --debug",
     "build": "browserify src/source.js -o public/bundle.js && uglifyjs public/bundle.js --compress -o public/bundle.js",
     "shell": "node --experimental-repl-await",
     "deploy": "git subtree push --prefix public origin gh-pages"
   },
   "browserify": {
     "transform": [
-      ["babelify"]
+      [
+        "babelify"
+      ]
     ]
   }
 }

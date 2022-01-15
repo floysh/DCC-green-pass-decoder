@@ -140,7 +140,18 @@ async function loadDGCFromString(rawstring) {
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 const qrScanner = new QrScanner(UI.scannerVideo, rawstring => {
 	qrScanner.stop();
-	if ("vibrate" in navigator) navigator.vibrate(200);
+
+	// Do not attempt to vibrate on successful scan if the browser
+	// lacks support for navigator.vibrate (e.g Safari)
+	if ("vibrate" in navigator) {
+		try {
+			navigator.vibrate(200);
+		}
+		catch { 
+			// There's nothing we can do if it fails ¯\_(ツ)_/¯
+		}
+	}
+
 	UI.scanner.hidden = true;
 	
 	// Decode the DGC and display its content
@@ -156,6 +167,7 @@ document.getElementById("start-scan").addEventListener("click", event => {
 	UI.reset();
 	UI.hideQRCanvas();
 	UI.scanner.hidden = false;
+	UI.setProgressText("Awaiting for scan results")
 	qrScanner.start()
 	.catch(err => {
 		alert(err+"\nThe camera stream is only available on HTTPS");
