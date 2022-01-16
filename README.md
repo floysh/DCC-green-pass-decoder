@@ -27,7 +27,7 @@ All the processing is done locally and your certificate never leaves your device
 * Progressive Web App, can work offline and be installed on many devices like a native app.
 * Can both display the raw certificate or parse it to make the fields human readable.
 * Can both load the QR-code from an existing file or scan it using the device camera
-* Signature validation
+* Signature validation. A list of the certificates used for this purpose can be found in [`docs/certificates.md`](docs/certificates.md)
 
 <br>
 
@@ -48,17 +48,24 @@ Run the watcher:
 ```(bash)
 npm run watch
 ```
-this will generate new builds of the JS bundle whenever you change something in the `src/` folder.
+this will generate new builds of the JS bundle whenever it detects something has changed in the `src/` folder.
 
 Then start your favorite local webserver in `public/`
 
+When you're satisfied with the edits, stop the watcher and make an optimized JS bundle:
+
+```
+npm run build
+```
+
+This will minify the javascript and reduce the bundle.js file size.
 
 <br>
 
 # How does it work
 ## Decoding the QR-code
 
-It's fairly easy to decode an EU DCC. The official EU repository states that the certificate is just a COSE message / CBOR Web Token (CWT).
+It's fairly easy to decode an EU DCC. The official EU repository states that the certificate is a COSE message / CBOR Web Token (CWT).
 
 The COSE message structure is the following:
 * **protected (signed) header**: this field contains some information about the certificate signature. The only interesting information here is the **Key Identifier (KID)**, which can be used by a validator app to efficiently retrieve the correct key that needs to be used in the signature validation step.
@@ -93,7 +100,7 @@ so decoding can be done by following the same steps in reverse:
 
 This was a bit more time consuming, mainly because there's no documented way to get some required files and I'm by no means an expert in dealing with crypto algorithms or digital signatures. 
 
-Further details on how this feature has been implemented can be found on [docs/signature-validation.md](docs/signature-validation.md)
+Further details on how this feature has been implemented can be found in [`docs/signature-validation.md`](docs/signature-validation.md).
 
 
 ## Resources
