@@ -6,7 +6,7 @@ import * as path from "path";
 const OUT_DIR = (process.env.OUT_DIR) ? process.env.OUT_DIR : 'out/';
 const CERTS_DIR = `${OUT_DIR}/certs`;
 const KEYS_DIR = `${OUT_DIR}/keys`;
-const MARKDOWN_DIR = `${OUT_DIR}`;
+const MARKDOWN_DIR = (process.env.MARKDOWN_DIR) ? process.env.MARKDOWN_DIR : `${OUT_DIR}`;
 
 const CERT_FILE = "it_dgc_certificates.json";
 const KEYS_FILE = "it_dgc_public_keys.json"

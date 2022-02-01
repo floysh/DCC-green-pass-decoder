@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-switch@2.0.0/dist/css/bulma-switch.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css">
     <link rel="stylesheet" href="style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -197,7 +198,7 @@
                     <div class="column is-two-thirds" id="results-col">
                         <div id="dgc-code" hidden>
                             <div class="container mb-5">
-                                <span class="label is-size-4">Encoded raw certificate</span>
+                                <span class="label is-size-4">QR content (Encoded raw certificate)</span>
                                 <pre id="dgc-raw"></pre>
                             </div>
                             <div class="container mb-5">
@@ -209,15 +210,16 @@
                             <span class="label is-size-4 is-unselectable">Certificate content</span>
                             <div class="notification is-warning is-light mb-6" id="error-bar" hidden>
                                 <div class="mb-2">
-                                    <strong>⚠️ This is not an EU Digital COVID Certificate</strong>
+                                    <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                    <strong id="error-title">Error</strong>
                                 </div>
                                 <div class="container">
                                     <div class="content">
                                         <span><!-- ERROR_TEXT here --></span>
                                         <span id="error-text"></span>
                                     </div>
-                                    <div class="text-breakable content">
-                                        <span>Decoded text: </span>
+                                    <div class="text-breakable content" hidden>
+                                        <span>QR content: </span>
                                         <span id="qr-decoded-content" class="text-breakable">none</span>
                                     </div>
                                 </div>
@@ -230,15 +232,6 @@
                                 <span>
                                     <strong id="progress-text">Loading</strong>
                                 </span>
-                            </div>
-
-                            <div id="load-tip" class="mt-6 mb-6 is-unselectable">
-                                <div class="section has-text-centered content is-vcentered">
-                                    <p class="is-size-2 mb-5">🔍</p>
-                                    <p>
-                                        Your health certificate information will be displayed here
-                                    </p>
-                                </div>
                             </div>
                             
 
@@ -481,6 +474,16 @@
                                 <div class="field">
                                     <span class="label">Date of First positive NAA test result</span>
                                     <input type="text" id="r-fr" class="dgc recovery input" placeholder="e.g 2021-04-03" readonly>
+                                </div>
+                            </div>
+
+                            
+                            <div id="load-tip" class="section is-unselectable">
+                                <div class="section has-text-centered content is-vcentered">
+                                    <p class="is-size-2 mb-5">🔍</p>
+                                    <p>
+                                        Your health certificate information will be displayed here
+                                    </p>
                                 </div>
                             </div>
 

@@ -63,11 +63,15 @@ export class EUGreenCertificate {
     }
 
     getHCertJson() {
-        return this.data.payload[0].get(-260).get(1)
+        const payload = this.data.payload[0]
+        if (payload instanceof Map)
+            return payload.get(-260).get(1)
+        else 
+            return payload[-260][1]
     }
 
 
-    toRawString() {
+    toRawJSON() {
         function map2json(map) {
             return Array.from(map).reduce((acc, [key, value]) => {
                 if (value instanceof Uint8Array) {
@@ -85,16 +89,29 @@ export class EUGreenCertificate {
 
         let header1 = map2json(this.data.header1[0]);
         let header2 = map2json(this.data.header2);
-        let payload = map2json(this.data.payload[0]);
+        let payload = (this.data.payload[0] instanceof Map) ? map2json(this.data.payload[0]) : this.data.payload[0];
         let signature = this.data.signature.reduce ( (str, v) => str + " " + v, "");
         //let signature = JSON.stringify(this.data.signature);
 
-        let out = `${JSON.stringify(header1,null,2)},\n${JSON.stringify(header2,null,2)},\n${JSON.stringify(payload,null,2)},\n${signature}`;
+        return {
+            protected_header: header1,
+            unprotected_header: header2,
+            payload: payload,
+            signature: signature
+        }
+        
+    }
 
+    toRawString() {
+        let raw = this.toRawJSON()
+        
+        //let out = `${JSON.stringify(raw.header1,null,2)},\n${JSON.stringify(raw.header2,null,2)},\n${JSON.stringify(raw.payload,null,2)},\n${raw.signature}`;
+        let out = `protected header: ${JSON.stringify(raw.protected_header,null,2)},\nunprotected header: ${JSON.stringify(raw.unprotected_header,null,2)},\npayload: ${JSON.stringify(raw.payload,null,2)},\nsignature: ${raw.signature}`;
+        //let out = JSON.stringify(raw,null,2)
         return out;
     }
 
-    toString() { this.getHCertJson() }
+    toString() { return this.getHCertJson() }
     
 
     /* 
@@ -322,7 +339,7 @@ function loadValueSets() {
 
 	Promise.all(promises).then(() => {
 		valueSetsLoaded = true;
-        console.info("Value sets loaded!")
+        console.info("Valuesets loaded!")
 	})
 }
 window.addEventListener("load", loadValueSets());

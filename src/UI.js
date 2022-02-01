@@ -10,6 +10,7 @@ export function reset() {
 	document.getElementById("signature-invalid-notification").hidden = true;
 	document.getElementById("signature-verified-notification").hidden = true;
 	document.getElementById("qr-decoded-content").innerText = "";
+	document.querySelector("#qr-decoded-content").parentElement.hidden = true;
 	getQRCanvas().height += 0; //clean preview 
 
 	document.getElementById("cert-type").innerText = "";
@@ -86,18 +87,20 @@ signatureDetailsToggle.addEventListener("click", event => {
 
 // ERROR BAR
 
-export function showErrorMessage(err,err_header) {
+export function showErrorMessage(err, error_title="Error", error_text=null, display_in_raw_field = true) {
 	console.warn("NOT A DGC: "+err)
 	// Show error message
-	const errtext = err_header+"\n"+err;
-	document.querySelector("#dgc-json").textContent = errtext;
-	document.querySelector("#error-text").textContent = err;
+	const message = error_text ? error_text : err ;
+	if (display_in_raw_field) document.querySelector("#dgc-json").textContent = error_title+"\n"+message;
+	document.querySelector("#error-title").textContent = error_title
+	document.querySelector("#error-text").textContent = message;
 	document.querySelector("#error-bar").hidden = false;
 	document.querySelector("#progress").classList.add("is-hidden");
 }
 
 export function showDecodedText(text) {
 	document.querySelector("#qr-decoded-content").innerText = text
+	document.querySelector("#qr-decoded-content").parentElement.hidden = false
 }
 
 
@@ -189,7 +192,7 @@ export function displayRawHCERT(json) {
 }
 
 
-export function displaySignatureResult(isAuthentic) {
+export function displaySignatureCheckResult(isAuthentic) {
     document.getElementById("progress").classList.add("is-hidden");
     switch(isAuthentic) {
         case (null): // no keys available for validation
@@ -252,6 +255,7 @@ export function displaySigner(str) {
 	document.getElementById("cert-co").innerText = str
 }
 
+export const scanButton = document.getElementById("start-scan");
 
 export const scannerVideo = document.getElementById("camera-stream")
 
