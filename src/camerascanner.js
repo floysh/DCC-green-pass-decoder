@@ -1,4 +1,4 @@
-import * as UI from "./ui"
+import * as UI from "./UI"
 import * as QR from "./qr"
 
 // Scan button
