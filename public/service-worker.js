@@ -1,6 +1,6 @@
 // Change this number to force a new service worker install
 // and app update
-const SERVICE_WORKER_VERSION = 133
+const SERVICE_WORKER_VERSION = 134
 
 // Cache the app main files
 const filesToCache = [
