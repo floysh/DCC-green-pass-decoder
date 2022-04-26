@@ -59,15 +59,15 @@ Unfortunately, there's no way to retrieve the whole certificate list with a sing
 To retrieve a certificate, a GET request is made to `/signercertificate/update` with a custom header 
 ```
 headers: {
-    X_RESUME_TOKEN: [Integer]
+    X-RESUME-TOKEN: [Integer]
 }
 ```
 
-The `X_RESUME_TOKEN` header is used by the server to determine which certificate will be delivered to the app. For the first certificate, `X_RESUME_TOKEN` is set to `-1`.
+The `X-RESUME-TOKEN` header is used by the server to determine which certificate will be delivered to the app. For the first certificate, `X-RESUME-TOKEN` is set to `-1`.
 
 The response comes with custom headers as well: 
-  * `X_KID` : the key identifier of the returned certificate.
-  * `X_RESUME_TOKEN` : the resume token required to retrieve the next certificate in the list.
+  * `X-KID` : the key identifier of the returned certificate.
+  * `X-RESUME-TOKEN` : the resume token required to retrieve the next certificate in the list.
 
 The response body is of `type/text` and contains the certificate's body in PEM format, without beginning and ending tokens.
 
